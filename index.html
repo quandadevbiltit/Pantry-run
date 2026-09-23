@@ -1,3 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- lay the page out at the phone's real width, edge to edge -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F6F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1418" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<!-- open full screen when launched from the home screen -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pantry Run">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+/* what the Claude viewer used to provide */
+html,body{margin:0;padding:0}
+img{max-width:100%}
+[hidden]:not([hidden=until-found i]){display:none!important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+</style>
 <title>Pantry Run</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -603,13 +628,59 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 }
 .banner svg{width:16px;height:16px;flex:0 0 16px;margin-top:1px}
 .skel{height:64px;border-radius:var(--r);background:var(--surface-2);margin-bottom:9px;opacity:.7}
+/* ============ WIDE SCREENS (iPad, laptop) — phones never reach these ============ */
+@media (min-width:740px){
+  :root{--rail:96px}
+  body{padding-left:var(--rail)}
+  .wrap{max-width:1180px;padding-inline:clamp(20px,3vw,32px)}
+  /* bottom tabs become a side rail */
+  nav.tabs{top:0;right:auto;width:var(--rail);border-top:none;border-right:1px solid var(--line);
+    padding-bottom:0;padding-top:env(safe-area-inset-top,0px)}
+  nav.tabs .wrap{display:flex;flex-direction:column;gap:6px;padding:16px 10px;max-width:none}
+  .tab{min-height:66px;position:relative}
+  .tab .badge{top:8px;right:16px;transform:none}
+  .bar{left:var(--rail)}
+  .toast{bottom:calc(24px + var(--bar-h,0px))}
+  /* Home: summary and quick actions on the left, Still Needed and Running Low on the right */
+  .home-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 var(--gap-4);align-items:start}
+  /* Catalog: category groups flow into columns */
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,284px),1fr));gap:0 var(--gap-3);align-items:start}
+  .narrow{max-width:760px}
+  /* totals: four figures across, Finish Trip beneath */
+  .bar .grid{grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;gap:6px 20px}
+  .bar .cell.big{grid-column:auto!important}
+  .bar .miss{grid-column:1/-1}
+  /* sheets open as centred dialogs rather than rising from the bottom */
+  .scrim{align-items:center;padding:24px}
+  .sheet{border-radius:20px;max-height:min(86vh,820px)}
+}
+@media (min-width:1000px){
+  /* totals and Finish Trip in a single row */
+  .bar .grid{grid-template-columns:repeat(4,minmax(0,1fr)) minmax(180px,auto)}
+  .bar .fin{grid-column:-2/-1;grid-row:1;margin-top:0;align-self:center}
+  /* Shopping List with the catalog beside it */
+  .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,390px);gap:var(--gap-4);align-items:start}
+  .split .addmore{display:none}
+  .split-side{position:sticky;top:calc(var(--appbar-h,72px) + 14px);margin-top:14px;
+    max-height:calc(100vh - var(--appbar-h,72px) - var(--bar-h,0px) - 44px);
+    display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--r);overflow:hidden}
+  .panel-hd{padding:14px 14px 12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+  .panel-title{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:var(--ink)}
+  .panel-title svg{width:17px;height:17px;color:var(--accent)}
+  .panel-bd{overflow-y:auto;overscroll-behavior:contain;padding:2px 12px 14px;flex:1}
+  .panel-bd .card{background:var(--surface-3)}
+}
+@media (min-width:740px) and (prefers-reduced-motion:reduce){ .sheet{animation:none} }
+
 /* one type family, but figures still line up in columns */
 .kv .v,.row .price,.li .tot,.bar .cell .v,.pricebtn,.grouphd .n,.trip-card .total,
 .wtin input,.tab .badge,.sec-head .count,.fbadge,.cmp td,.pre input,.ph-store .kv .v{
   font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
 }
 </style>
-
+</head>
+<body>
 <div class="appbar"><div class="wrap" id="appbar"></div></div>
 <main id="screens"><div class="wrap" id="screen"></div></main>
 <div id="barhost"></div>
@@ -1035,6 +1106,12 @@ function listToggleBtn(p) {
          aria-label="Add ${esc(p.name)} to list" title="Add to list">${svg('plus')}</button>`;
 }
 
+/* Wide layouts: 740px+ gets a side rail and roomier grids (iPad portrait and up);
+   1000px+ puts the catalog beside the shopping list. Phones never match either. */
+const mq = q => (window.matchMedia ? window.matchMedia(q) : { matches: false, addEventListener() {} });
+const MQ_RAIL = mq('(min-width: 740px)'), MQ_SPLIT = mq('(min-width: 1000px)');
+const isRail = () => MQ_RAIL.matches;
+const isSplit = () => MQ_SPLIT.matches;
 const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 let checkTimer = null;
 
@@ -1060,10 +1137,19 @@ function render() {
     document.body.classList.remove('has-bar');
     return;
   }
+  /* the catalog panel beside the list keeps its scroll and typing focus across redraws */
+  const keep = [...el.querySelectorAll('[data-keep]')].map(x => [x.dataset.keep, x.scrollTop]);
+  const focusId = document.activeElement && el.contains(document.activeElement) ? document.activeElement.id : null;
+  const caret = focusId && document.activeElement.selectionStart != null ? document.activeElement.selectionStart : null;
   el.innerHTML = view === 'home' ? viewHome()
     : view === 'catalog' ? viewCatalog()
-    : view === 'list' ? viewList()
-    : viewHistory();
+    : view === 'list' ? (isSplit() ? `<div class="split"><div class="split-main">${viewList()}</div>${catalogPanel()}</div>` : viewList())
+    : `<div class="narrow">${viewHistory()}</div>`;
+  keep.forEach(([k, top]) => { const x = el.querySelector(`[data-keep="${k}"]`); if (x) x.scrollTop = top; });
+  if (focusId === 'pickq-side') {
+    const f = document.getElementById(focusId);
+    if (f) { f.focus(); if (caret != null) try { f.setSelectionRange(caret, caret); } catch (e) {} }
+  }
   renderBar();
   const nav = document.querySelector('nav.tabs');
   if (chromeRO && nav && !nav.dataset.obs) { nav.dataset.obs = '1'; chromeRO.observe(nav); }
@@ -1147,6 +1233,7 @@ function viewHome() {
   }
   h += '</div>';
 
+  const homeTop = h; h = '';
   /* Still Needed — like Running Low, an item drops off once it's on the list */
   const outstanding = stillNeeded();
   const sn = outstanding.filter(i => !onActiveList(i.productId));
@@ -1188,7 +1275,7 @@ function viewHome() {
     h += `<div class="empty">${svg('tag', 'eicon')}Nothing marked low right now.</div>`;
   }
   h += '</div>';
-  return h;
+  return `<div class="home-grid"><div class="home-a">${homeTop}</div><div class="home-b">${h}</div></div>`;
 }
 
 function quickRow(productId, name, category, pillHtml) {
@@ -1246,12 +1333,14 @@ function viewCatalog() {
     </div></div>`;
   }
 
+  h += '<div class="groups">';
   for (const [key, label, arr] of groupByCategory(items)) {
     h += `<div class="sec" style="margin-top:16px">
       ${groupHead('cat', key, label, arr.length)}
       ${isCollapsed('cat', key) ? '' : `<div class="card stack">${arr.map(catalogRow).join('')}</div>`}
     </div>`;
   }
+  h += '</div>';
   h += `<div class="sec"><button class="btn block" data-act="add-menu">${svg('plus')}Add a product or category</button></div>`;
   return h;
 }
@@ -1267,7 +1356,7 @@ const DUP_PACK = new Set(['dozen', 'pack', 'pk', 'count', 'ct', 'box', 'bag', 'b
   'tub', 'family', 'value', 'size', 'bulk', 'large', 'small', 'medium', 'jumbo', 'mini', 'l', 'ml', 'g', 'kg', 'lb', 'oz']);
 function dupNorm(s) {
   return String(s || '').toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')      /* café → cafe */
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')      /* café → cafe */
     .replace(/&/g, ' and ')
     .replace(/(\d)\s+(?=[a-z])/g, '$1')                      /* "2 L" → "2l" */
     .replace(/[^a-z0-9]+/g, ' ').trim();
@@ -1558,7 +1647,7 @@ function viewList() {
     }
   }
 
-  h += `<div class="sec"><button class="btn block" data-act="pick-items">${svg('plus')}Add items from catalog</button></div>`;
+  h += `<div class="sec addmore"><button class="btn block" data-act="pick-items">${svg('plus')}Add items from catalog</button></div>`;
 
   if (done.length) {
     h += `<details class="disclose" ${ui.showDone ? 'open' : ''} data-act="toggle-done">
@@ -1619,6 +1708,18 @@ function listItemRow(it) {
   </div>`;
 }
 
+/* Wide screens: the catalog sits beside the list, so adding needs no extra sheet. */
+function catalogPanel() {
+  return `<aside class="split-side" aria-label="Add from catalog">
+    <div class="panel-hd">
+      <div class="panel-title">${svg('book')}Add from catalog</div>
+      <input class="inp" id="pickq-side" type="search" placeholder="Search products" data-act="pick-search"
+             autocomplete="off" value="${esc(ui.pickQuery)}" aria-label="Search products to add">
+    </div>
+    <div class="panel-bd" data-keep="pickpanel"><div id="pickres">${pickResults(pickMatches())}</div></div>
+  </aside>`;
+}
+
 /* ---------------- totals bar ---------------- */
 function renderBar() {
   const host = document.getElementById('barhost');
@@ -1659,9 +1760,12 @@ function measureChrome() {
   const nav = document.querySelector('nav.tabs');
   const bar = document.querySelector('.bar');
   const r = document.documentElement;
-  if (nav) r.style.setProperty('--nav-h', Math.ceil(nav.offsetHeight) + 'px');
+  const railed = isRail();
+  if (nav) r.style.setProperty('--nav-h', railed ? '0px' : Math.ceil(nav.offsetHeight) + 'px');
+  const ab = document.querySelector('.appbar');
+  if (ab) r.style.setProperty('--appbar-h', Math.ceil(ab.offsetHeight) + 'px');
   if (bar) {
-    const navH = nav ? nav.offsetHeight : 0;
+    const navH = nav && !railed ? nav.offsetHeight : 0;
     r.style.setProperty('--bar-h', Math.ceil(bar.offsetHeight - navH) + 'px');
   } else {
     r.style.removeProperty('--bar-h');
@@ -1672,6 +1776,8 @@ if (typeof ResizeObserver !== 'undefined') {
   chromeRO = new ResizeObserver(() => measureChrome());
 }
 window.addEventListener('resize', measureChrome);
+/* rotating an iPad or resizing a window across a breakpoint swaps the layout */
+[MQ_RAIL, MQ_SPLIT].forEach(m => m.addEventListener && m.addEventListener('change', () => { if (S.ready) render(); measureChrome(); }));
 window.addEventListener('orientationchange', () => setTimeout(measureChrome, 120));
 
 /* ---------------- HISTORY ---------------- */
@@ -3253,7 +3359,13 @@ function handleClick(e) {
       render(); return;
     }
     case 'group': ui.listGroup = el.dataset.v; render(); return;
-    case 'pick-items': ui.pickQuery = ''; sheetPick(); return;
+    case 'pick-items': {
+      if (isSplit() && view === 'list') {
+        const f = document.getElementById('pickq-side');
+        if (f) { f.focus(); f.select(); return; }
+      }
+      ui.pickQuery = ''; sheetPick(); return;
+    }
 
     case 'finish': sheetFinish(); return;
     case 'finish-confirm': finishTrip(); return;
@@ -3708,3 +3820,5 @@ function finishTrip() {
 render();
 boot();
 </script>
+</body>
+</html>
