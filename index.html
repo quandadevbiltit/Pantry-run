@@ -1,0 +1,3710 @@
+<title>Pantry Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  /* cool slate + teal — one palette for the whole app */
+  --ground:#F4F6F8; --surface:#FFFFFF; --surface-2:#EDF1F5; --surface-3:#F8FAFC;
+  --ink:#1A2430; --ink-2:#4B5A6B; --ink-3:#64748B;
+  --line:#E3E8EE; --line-2:#CFD8E2;
+  --accent:#0C7168; --accent-ink:#FFFFFF; --accent-soft:#E6F4F1; --accent-line:#A7D6CF;
+  --warn:#9A6212; --warn-soft:#FAF1E2; --warn-line:#E7CFA4;
+  --alert:#A3423C; --alert-soft:#FAEBE9; --on-alert:#fff;
+  --star:var(--accent);
+  --shadow-1:0 1px 2px rgba(26,36,48,.05);
+  --shadow-2:0 1px 3px rgba(26,36,48,.06),0 12px 28px rgba(26,36,48,.10);
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --disp:var(--sans);
+  --mono:var(--sans);
+  --r:16px; --r-sm:12px;
+  /* spacing scale */
+  --gap-1:8px; --gap-2:12px; --gap-3:16px; --gap-4:24px; --gap-5:32px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1418; --surface:#18202A; --surface-2:#222C38; --surface-3:#141C24;
+    --ink:#E8EDF2; --ink-2:#A8B5C2; --ink-3:#8D9BAA;
+    --line:#26313D; --line-2:#36434F;
+    --accent:#4FC0B2; --accent-ink:#06201D; --accent-soft:#16302E; --accent-line:#2B5751;
+    --warn:#D6A35F; --warn-soft:#2A2318; --warn-line:#473A24;
+    --alert:#DE8F88; --alert-soft:#2C1D1C; --on-alert:#2A1110;
+    --star:var(--accent);
+    --shadow-1:0 1px 2px rgba(0,0,0,.35);
+    --shadow-2:0 1px 3px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1418; --surface:#18202A; --surface-2:#222C38; --surface-3:#141C24;
+  --ink:#E8EDF2; --ink-2:#A8B5C2; --ink-3:#8D9BAA;
+  --line:#26313D; --line-2:#36434F;
+  --accent:#4FC0B2; --accent-ink:#06201D; --accent-soft:#16302E; --accent-line:#2B5751;
+  --warn:#D6A35F; --warn-soft:#2A2318; --warn-line:#473A24;
+  --alert:#DE8F88; --alert-soft:#2C1D1C; --on-alert:#2A1110;
+  --star:var(--accent);
+  --shadow-1:0 1px 2px rgba(0,0,0,.35);
+  --shadow-2:0 1px 3px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box;min-width:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.45;
+  -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent;
+  overflow-x:hidden;
+}
+button,summary,[role="checkbox"],[role="switch"],label{touch-action:manipulation}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;letter-spacing:-.01em}
+
+/* ---------- shell ---------- */
+.wrap{max-width:560px;margin-inline:auto;padding-inline:clamp(16px,4.4vw,20px)}
+/* --nav-h and --bar-h are measured at runtime so content always clears the fixed bars */
+#screens{padding-bottom:calc(var(--nav-h,76px) + 24px)}
+body.has-bar #screens{padding-bottom:calc(var(--nav-h,76px) + var(--bar-h,150px) + 24px)}
+
+.appbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.appbar .wrap{display:flex;align-items:center;gap:10px;padding-block:12px 10px;min-height:56px}
+.appbar h1{
+  font-family:var(--disp);font-weight:700;font-size:23px;line-height:1.12;margin:0;
+  letter-spacing:-.022em;flex:1;text-wrap:balance;
+}
+.appbar .sub{display:block;font-family:var(--sans);font-weight:600;font-size:11px;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+
+.iconbtn{
+  width:44px;height:44px;flex:0 0 44px;border-radius:var(--r-sm);
+  display:grid;place-items:center;color:var(--ink-2);
+  border:1px solid transparent;transition:background .14s ease,color .14s ease;
+}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+.appbar .iconbtn{background:var(--accent-soft);color:var(--accent)}
+.appbar .iconbtn:hover{background:var(--accent);color:var(--accent-ink)}
+.iconbtn svg{width:20px;height:20px}
+
+/* ---------- bottom nav ---------- */
+nav.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+nav.tabs .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding-block:6px;padding-inline:8px}
+.tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:7px 2px 6px;border-radius:10px;color:var(--ink-3);min-height:52px;
+}
+.tab svg{width:21px;height:21px;stroke-width:1.7}
+.tab span{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.02em}
+.tab[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
+.tab .badge{
+  position:absolute;transform:translate(15px,-9px);
+  background:var(--accent);color:var(--accent-ink);border-radius:20px;
+  font-family:var(--mono);font-size:9.5px;font-weight:600;line-height:1;
+  padding:3px 5px;min-width:16px;text-align:center;
+}
+
+/* ---------- blocks ---------- */
+.sec{margin-top:var(--gap-4)}
+.sec-head{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;padding-inline:2px}
+.sec-head h2{
+  font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-3);margin:0;
+}
+.sec-head .count{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.sec-head .spacer{flex:1}
+.sec-note{font-size:12.5px;color:var(--ink-3);margin:-4px 2px 9px;line-height:1.4}
+
+/* LIST-GROUP CARD — one rounded container, rows divided inside it */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stack{display:flex;flex-direction:column}
+.stack>*+*{border-top:1px solid var(--line)}
+
+.empty{
+  background:var(--surface-3);border:1px solid var(--line);border-radius:var(--r);
+  padding:26px 20px;text-align:center;color:var(--ink-3);font-size:13.5px;line-height:1.55;
+}
+.empty strong{display:block;color:var(--ink-2);font-weight:600;font-size:15px;margin-bottom:5px}
+.empty .eicon{width:26px;height:26px;margin:0 auto 10px;color:var(--line-2);display:block}
+
+/* ---------- buttons ---------- */
+/* SECONDARY BUTTON is the base; .primary, .action and .dangerfill build on it */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:0 18px;border-radius:var(--r-sm);
+  font-family:var(--disp);font-weight:600;font-size:14.5px;letter-spacing:-.005em;
+  background:var(--surface);color:var(--ink);border:1px solid var(--line-2);
+  transition:background .14s ease,border-color .14s ease,color .14s ease;
+}
+.btn:hover{background:var(--surface-2)}
+/* ACTION CARD — a tinted, lower-emphasis secondary action */
+.btn.action{background:var(--accent-soft);border-color:transparent;color:var(--accent);justify-content:flex-start;gap:10px;padding:0 16px}
+.btn.action:hover{background:var(--accent-soft);border-color:var(--accent-line)}
+.btn.action svg{color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+.btn.ghost:hover{background:var(--accent-soft)}
+.btn.danger{color:var(--alert);border-color:var(--line-2)}
+.btn.danger:hover{background:var(--alert-soft)}
+.btn.block{display:flex;width:100%}
+.btn.sm{min-height:44px;padding:0 13px;font-size:13.5px;border-radius:10px;flex:0 0 auto}
+.btn:disabled{opacity:.45;cursor:default}
+.btn svg{width:17px;height:17px;flex:0 0 17px}
+.btnrow{display:flex;gap:9px;margin-top:12px}
+.btnrow>*{flex:1}
+
+/* QUICK ACTION — teal on a soft teal tint, 44px to the touch */
+.addbtn{
+  flex:0 0 44px;width:44px;height:44px;border-radius:var(--r-sm);
+  background:var(--accent-soft);color:var(--accent);border:1px solid transparent;
+  display:grid;place-items:center;transition:background .14s ease,color .14s ease;
+}
+.addbtn:hover{background:var(--accent);color:var(--accent-ink)}
+.addbtn svg{width:19px;height:19px;stroke-width:2.2}
+/* solid = on the list; tapping it takes the product back off */
+.addbtn.done{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.addbtn.done:hover,.addbtn.done:focus-visible{background:var(--alert);border-color:var(--alert);color:#fff}
+.addbtn .i-on,.addbtn .i-off{display:grid;place-items:center}
+.addbtn .i-off{display:none}
+.addbtn.done:hover .i-on,.addbtn.done:focus-visible .i-on{display:none}
+.addbtn.done:hover .i-off,.addbtn.done:focus-visible .i-off{display:grid}
+.addbtn.mark{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+
+/* ---------- pills / chips ---------- */
+.pill{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--disp);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 7px;border-radius:5px;background:var(--surface-2);color:var(--ink-2);
+}
+.pill.low{background:var(--warn-soft);color:var(--warn)}
+.pill.need{background:var(--alert-soft);color:var(--alert)}
+.pill.wt{background:var(--accent-soft);color:var(--accent)}
+
+.chips{display:flex;gap:7px;overflow-x:auto;padding:2px 16px 2px;margin-inline:-16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;padding:7px 14px;border-radius:22px;min-height:44px;
+  border:1px solid var(--line-2);background:var(--surface);
+  font-size:13.5px;font-weight:500;color:var(--ink-2);white-space:nowrap;
+  display:inline-flex;align-items:center;
+}
+.chip{transition:background .14s ease,color .14s ease,border-color .14s ease}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line);font-weight:600}
+
+.seg{display:flex;background:var(--surface-2);border-radius:var(--r-sm);padding:3px;gap:3px}
+.seg button{
+  flex:1;min-height:44px;border-radius:9px;text-align:center;
+  font-family:var(--disp);font-weight:600;font-size:13px;line-height:1.15;color:var(--ink-2);
+  display:flex;align-items:center;justify-content:center;
+  padding:4px;text-wrap:balance;
+}
+.seg.three button{font-size:12.5px;letter-spacing:-.01em}
+.seg button{transition:background .16s ease,color .16s ease}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.seg button,.chip,.btn,.addbtn,.iconbtn{transition:none}}
+
+/* ---------- home ---------- */
+/* PRIMARY CARD — the one summary that earns a little depth */
+.trip-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px;box-shadow:var(--shadow-1);
+}
+.trip-card .line{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:14px}
+.trip-card .k{font-family:var(--disp);font-size:clamp(9.5px,2.9vw,11px);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.trip-card .items{font-family:var(--disp);font-weight:600;font-size:clamp(16px,4.9vw,19px);letter-spacing:-.015em;text-wrap:balance}
+.trip-card .total{font-weight:700;font-size:clamp(21px,6.6vw,27px);letter-spacing:-.03em}
+.trip-card .line>div:last-child{flex:0 0 auto}
+.trip-card .miss{
+  display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--warn);
+  font-weight:500;line-height:1.4;margin:-4px 0 12px;
+}
+.trip-card .miss svg{width:14px;height:14px;flex:0 0 14px;margin-top:2px}
+
+/* ---------- rows ---------- */
+.row{display:flex;align-items:center;gap:12px;padding:11px 13px;min-height:58px}
+.row .body{flex:1;min-width:0}
+.row .name{font-weight:550;font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.row .meta{font-size:12.5px;color:var(--ink-3);margin-top:2px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.row .meta .num{font-size:12.5px}
+.row .meta svg,.selrow .meta svg{width:13px;height:13px;flex:0 0 13px;color:var(--ink-3)}
+.row .price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;white-space:nowrap}
+.row.tappable:hover{background:var(--surface-3)}
+.dot{color:var(--line-2)}
+
+/* ---------- list item ---------- */
+.li{padding:11px 11px 10px;display:flex;gap:4px;align-items:flex-start}
+.li.done{opacity:.62}
+/* 44px hit area, 27px visual box */
+.check{
+  flex:0 0 44px;width:44px;height:44px;margin-top:-4px;
+  display:grid;place-items:center;
+}
+.check .box{
+  width:28px;height:28px;border-radius:9px;
+  border:2px solid var(--line-2);background:var(--surface);
+  display:grid;place-items:center;color:transparent;
+  transition:background .12s,border-color .12s;
+}
+.check:hover .box{border-color:var(--accent)}
+.check .box svg{width:16px;height:16px;stroke-width:3}
+.check[aria-checked="true"] .box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+@media (prefers-reduced-motion:reduce){.check .box{transition:none}}
+.li .main{flex:1;min-width:0}
+.li .top{display:flex;gap:10px;align-items:flex-start}
+.li .nm{flex:1;min-width:0;font-weight:550;font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.li.done .nm{text-decoration:line-through;text-decoration-color:var(--ink-3)}
+.li .tot{font-family:var(--mono);font-weight:600;font-size:15px;white-space:nowrap;letter-spacing:-.02em}
+.li .tot.missing{color:var(--warn);font-size:13px;font-weight:500}
+/* remove stays a fixed right-hand column so meta text wraps beneath it,
+   never pushing it onto a line of its own; row-gap clears the tap areas */
+.li .sub{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:6px;margin-top:3px;padding-right:2px}
+.li .subwrap{
+  flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-items:center;
+  gap:6px;row-gap:14px;font-size:12px;color:var(--ink-3);padding-block:4px;
+}
+.li .sub .rm{flex:0 0 32px;margin-left:0}
+/* store chip: 32px visual, 44px hit area via padding + negative margin */
+/* 32px chip, but ::after pushes the real tap area out to 44px without
+   bloating the meta line's rhythm */
+.li .chipbtn{
+  position:relative;
+  display:inline-flex;align-items:center;min-height:32px;padding:6px 10px;margin-block:-6px;
+  max-width:100%;border-radius:16px;border:1px solid var(--line);background:var(--surface-3);
+  color:var(--ink-2);font-size:12px;line-height:1.25;overflow-wrap:anywhere;
+}
+.li .chipbtn::after{content:"";position:absolute;inset:-6px -2px}
+.li .chipbtn:hover{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)}
+/* an item with no category is worth noticing, and one tap from fixing */
+.li .chipbtn.unset{background:var(--warn-soft);border-color:var(--warn-line);color:var(--warn);font-weight:500}
+.li .chipbtn.unset:hover{background:var(--warn);border-color:var(--warn);color:#fff}
+.li .ctl{display:flex;align-items:center;gap:7px;margin-top:10px;flex-wrap:wrap;row-gap:7px}
+
+.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--surface)}
+.stepper button{width:44px;height:44px;display:grid;place-items:center;color:var(--accent);background:var(--accent-soft)}
+.stepper button:hover{background:var(--accent);color:var(--accent-ink)}
+.stepper button svg{width:16px;height:16px;stroke-width:2.2}
+.stepper{flex:0 0 auto}
+.stepper .v{
+  min-width:30px;text-align:center;font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;
+  border-inline:1px solid var(--line);align-self:stretch;display:grid;place-items:center;padding-inline:4px;
+  background:var(--surface);
+}
+.stepper .del{color:var(--alert);background:var(--alert-soft)}
+.stepper .del:hover{background:var(--alert);color:var(--on-alert)}
+
+.wtin{
+  display:inline-flex;align-items:center;gap:5px;height:44px;padding:0 11px;
+  border:1px solid var(--line-2);border-radius:11px;background:var(--surface);
+}
+.wtin input{
+  width:64px;height:44px;border:none;background:transparent;padding:0;
+  font-family:var(--mono);font-weight:600;font-size:16px;text-align:right;
+}
+.wtin input:focus{outline:none}
+.wtin:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.wtin .u{font-size:12px;color:var(--ink-3);font-weight:500}
+
+.pricebtn{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;height:44px;padding:0 12px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--surface);
+  font-family:var(--mono);font-size:13.5px;font-weight:500;white-space:nowrap;
+  flex:0 0 auto;min-width:max-content;
+}
+.pricebtn:hover{border-color:var(--accent);color:var(--accent)}
+.pricebtn.actual{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:600}
+.pricebtn.missing{background:var(--warn-soft);border-color:var(--warn-line);color:var(--warn)}
+.pricebtn .ea{font-family:var(--sans);font-size:11.5px;color:var(--ink-3)}
+.pricebtn.actual .ea{color:var(--accent)}
+.pricebtn.missing .ea{color:var(--warn)}
+/* 32px visual, 44px tap area — secondary to the stepper and price */
+.rm{position:relative;margin-left:auto;width:32px;height:32px;flex:0 0 32px;border-radius:9px;display:grid;place-items:center;color:var(--ink-3)}
+.rm::after{content:"";position:absolute;inset:-6px -3px}
+.rm:hover{background:var(--alert-soft);color:var(--alert)}
+.rm svg{width:16px;height:16px}
+.settings-rm{width:44px;height:44px;flex:0 0 44px;border-radius:11px}
+.settings-rm::after{content:none}
+.rm.confirm{background:var(--alert);color:#fff}
+.rm.confirm:hover{background:var(--alert);color:#fff}
+
+/* ---- duplicate warning ---- */
+.dupnote{
+  display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;
+  background:var(--warn-soft);border:1px solid var(--warn-line);color:var(--ink-2);
+  font-size:14.5px;line-height:1.45;
+}
+.dupnote svg{width:18px;height:18px;flex:0 0 18px;color:var(--warn);margin-top:1px}
+.dupnote b{color:var(--ink);font-weight:600}
+.duprow{align-items:center}
+.dupwhy{font-size:11px;font-family:var(--disp);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);margin-top:4px}
+
+/* ---- trip deletion confirmation ---- */
+.impact{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.impact li{
+  position:relative;padding:10px 12px 10px 34px;border-radius:10px;font-size:13.5px;line-height:1.45;
+  background:var(--alert-soft);color:var(--ink-2);
+}
+.impact li::before{
+  content:"";position:absolute;left:13px;top:15px;width:10px;height:2px;border-radius:2px;background:var(--alert);
+}
+.impact li b{color:var(--ink);font-weight:600}
+.impact.keep li{background:var(--accent-soft)}
+.impact.keep li::before{width:6px;height:10px;top:13px;left:15px;background:none;
+  border:solid var(--accent);border-width:0 2px 2px 0;transform:rotate(45deg);border-radius:0}
+.btn.dangerfill{background:var(--alert);color:var(--on-alert);border-color:transparent}
+/* backup & restore */
+.cmp{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cmp th,.cmp td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);font-weight:500}
+.cmp tr:last-child th,.cmp tr:last-child td{border-bottom:none}
+.cmp th[scope=row]{text-align:left;font-family:var(--sans);font-weight:400;color:var(--ink-3)}
+.cmp thead th{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+.cmp tr.diff td:last-child{color:var(--accent);font-weight:600}
+.restore-err{margin-top:12px;padding:11px 13px;border-radius:10px;background:color-mix(in srgb,var(--alert) 12%,transparent);color:var(--ink);font-size:14px;line-height:1.45;border:1px solid color-mix(in srgb,var(--alert) 35%,transparent)}
+.restore-paste{margin-top:18px}
+.restore-paste summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:14px;color:var(--ink-2);font-weight:500}
+.restore-paste textarea{margin-top:4px}
+.undo-card{display:flex;align-items:center;gap:12px;padding:11px 14px;margin-top:11px}
+.undo-card .name{font-weight:500}
+.undo-card .meta{font-size:13px;color:var(--ink-3);margin-top:2px}
+.busy{display:flex;align-items:center;gap:12px;padding:18px 2px;color:var(--ink-2);font-size:14px}
+.spin{width:20px;height:20px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite;flex:0 0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn.dangerfill:hover{filter:brightness(1.08)}
+
+/* ---- catalog toolbar + filter ---- */
+.toolbar{display:flex;gap:9px;align-items:stretch}
+.toolbar .inp{flex:1 1 auto;min-width:0}
+.filterbtn{flex:0 0 auto;min-height:48px;padding:0 14px;gap:7px;position:relative}
+.filterbtn svg{width:17px;height:17px}
+.filterbtn.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.fbadge{
+  display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;
+  background:var(--accent);color:var(--accent-ink);font-size:11.5px;font-weight:600;
+}
+.catcount{font-size:12.5px;color:var(--ink-3);margin:10px 2px 0}
+.chip.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line);font-weight:600}
+.chip.ghost{border-style:dashed;color:var(--ink-3);background:transparent}
+.chip svg.cx{width:13px;height:13px;margin-left:6px;opacity:.75}
+.chip svg.cstar{width:14px;height:14px;margin-right:6px}
+.chip .cn{margin-left:7px;font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.chip.on .cn{display:none}
+.afchips{flex-wrap:wrap;overflow:visible;margin-inline:0;padding-inline:0}
+/* long store/category names wrap inside their chip instead of running off-screen */
+.afchips .chip,.fchips .chip{white-space:normal;max-width:100%;text-align:left;line-height:1.3;padding-block:8px;overflow-wrap:anywhere}
+.fgroup{margin-bottom:18px}
+.fgroup .flabel{margin-bottom:8px}
+.fchips{display:flex;flex-wrap:wrap;gap:7px}
+.chip.zero{opacity:.45}
+.sheet-ft .fclear{flex:0 0 auto}
+.sheet-ft .fshow{flex:1 1 auto;white-space:nowrap}
+
+/* favourite star */
+.favbtn{
+  flex:0 0 44px;width:44px;height:44px;border-radius:var(--r-sm);display:grid;place-items:center;
+  color:var(--ink-3);transition:color .14s ease;
+}
+@media (prefers-reduced-motion:reduce){.favbtn{transition:none}}
+.favbtn svg{width:21px;height:21px;stroke-width:1.8}
+.favbtn:hover{color:var(--ink-3);background:var(--surface-2)}
+.favbtn[aria-pressed="true"]{color:var(--star)}
+.favbtn[aria-pressed="true"] svg{fill:currentColor}
+.favbtn.inhead{color:var(--ink-3)}
+.row .favbtn{margin-right:-6px}
+
+/* two-state stock pills used in the quick-mark sheet */
+.stockset{display:flex;gap:6px;flex:0 0 auto}
+.stockbtn{
+  min-height:44px;padding:0 11px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--surface);
+  font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.02em;
+  color:var(--ink-3);display:inline-flex;align-items:center;justify-content:center;
+}
+.stockbtn:hover{border-color:var(--ink-3);color:var(--ink-2)}
+.stockbtn.low[aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn-line);color:var(--warn)}
+.stockbtn.need[aria-pressed="true"]{background:var(--alert-soft);border-color:var(--alert);color:var(--alert)}
+.markrow .body{min-width:0}
+
+/* group header doubles as the collapse control for its category */
+.grouphd{
+  display:flex;align-items:center;gap:8px;padding:12px 2px 8px;flex-wrap:wrap;row-gap:4px;
+  width:100%;min-height:44px;background:none;border:none;border-radius:10px;
+}
+.grouphd:hover h3{color:var(--ink)}
+.grouphd .car{width:13px;height:13px;flex:0 0 13px;color:var(--ink-3);transition:transform .16s ease}
+.grouphd[aria-expanded="true"] .car{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.grouphd .car{transition:none}}
+.sheet-bd .grouphd:first-child{padding-top:2px}
+.grouphd h3{
+  font-family:var(--disp);font-weight:700;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);margin:0;
+  flex:1 1 auto;min-width:0;overflow-wrap:anywhere;
+}
+.grouphd .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:0 0 auto;white-space:nowrap}
+.grouphd .rule{flex:1 1 10px;min-width:6px;height:1px;background:var(--line)}
+
+/* ---------- totals bar ---------- */
+.bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:35;
+  padding-bottom:var(--nav-h,76px);
+  background:color-mix(in srgb,var(--surface) 94%,transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line-2);box-shadow:0 -6px 20px rgba(20,32,27,.07);
+}
+.bar .wrap{padding-block:11px 11px}
+.bar .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.bar .cell .k{font-family:var(--disp);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.bar .cell .v{font-family:var(--mono);font-size:15px;font-weight:500;letter-spacing:-.02em}
+.bar .cell.big .v{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.bar .cell.big .k{color:var(--ink-2)}
+.bar .cell.acc .v{color:var(--accent)}
+.bar .miss{
+  grid-column:1/-1;font-size:12px;color:var(--warn);font-weight:500;
+  display:flex;align-items:center;gap:5px;margin-top:1px;
+}
+.bar .miss svg{width:13px;height:13px;flex:0 0 13px}
+.bar .fin{grid-column:1/-1;margin-top:9px}
+
+/* ---------- sheet ---------- */
+.scrim{
+  position:fixed;inset:0;z-index:60;background:rgba(12,20,16,.42);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fade .16s ease;
+}
+/* layers below the top one: dim the parent sheet a little, don't re-dim the page */
+.scrim.under{background:transparent;animation:none}
+.scrim.under + .scrim{background:rgba(12,20,16,.3)}
+.scrim.under .sheet{animation:none;pointer-events:none}
+/* an empty drill-down shouldn't read as a broken fragment */
+.empty.roomy{padding-block:44px}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{transform:translateY(16px)}}
+.sheet{
+  width:100%;max-width:560px;max-height:min(92dvh,92vh,820px);
+  background:var(--ground);border-radius:20px 20px 0 0;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:var(--shadow-2);animation:rise .2s cubic-bezier(.2,.8,.3,1);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-reduced-motion:reduce){.scrim,.sheet{animation:none}}
+.sheet-hd{
+  display:flex;align-items:center;gap:10px;padding:14px 16px 12px;
+  border-bottom:1px solid var(--line);background:var(--surface);
+}
+.sheet-hd h2{font-family:var(--disp);font-weight:700;font-size:17px;margin:0;flex:1;letter-spacing:-.01em;line-height:1.25}
+.sheet-hd .sub{font-size:12px;color:var(--ink-3);font-family:var(--sans);font-weight:400;letter-spacing:0;text-transform:none;display:block;margin-top:1px}
+.sheet-bd{overflow-y:auto;overscroll-behavior:contain;padding:var(--gap-3);flex:1;-webkit-overflow-scrolling:touch}
+/* stacks to full-width buttons when two won't fit side by side */
+.sheet-ft{padding:12px 16px;border-top:1px solid var(--line);background:var(--surface);display:flex;gap:9px;flex-wrap:wrap}
+.sheet-ft>*{flex:1 1 148px}
+
+/* ---------- forms ---------- */
+.field{margin-bottom:14px}
+.field>label,.flabel{
+  display:block;font-family:var(--disp);font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px;
+}
+/* 16px keeps iOS from zooming the viewport when a field takes focus */
+.inp,select.inp,textarea.inp{
+  width:100%;min-height:48px;padding:12px 14px;border-radius:var(--r-sm);
+  border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-size:16px;
+}
+textarea.inp{min-height:76px;resize:vertical;line-height:1.5}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.inp.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 17px) 20px,calc(100% - 12px) 20px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:34px}
+/* collapses to one column when two columns can't hold their content */
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.pair>*{min-width:0}
+.hint{font-size:12px;color:var(--ink-3);margin-top:5px;line-height:1.45}
+.pre{
+  display:flex;align-items:center;border:1px solid var(--line-2);border-radius:var(--r-sm);
+  background:var(--surface);overflow:hidden;
+}
+.pre:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pre .sym{padding:0 2px 0 13px;color:var(--ink-3);font-size:15px;flex:0 0 auto}
+.pre .suf{padding:0 12px 0 4px;color:var(--ink-3);font-size:12.5px;white-space:nowrap;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis}
+.pre input{flex:1 1 40px;min-width:0;width:100%;border:none;background:transparent;padding:13px 6px;font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+.pre input:focus{outline:none}
+
+
+.disclose{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;margin-top:16px}
+.disclose>summary{
+  padding:13px;font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-2);cursor:pointer;list-style:none;
+  display:flex;align-items:center;gap:8px;min-height:48px;
+}
+.disclose>summary::-webkit-details-marker{display:none}
+.disclose>summary .car{width:15px;height:15px;transition:transform .16s;color:var(--ink-3);flex:0 0 15px}
+.disclose>summary .lead{width:16px;height:16px;flex:0 0 16px;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.disclose>summary .car{transition:none}}
+.disclose[open]>summary .car{transform:rotate(90deg)}
+.disclose>summary .n{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);text-transform:none;letter-spacing:0}
+.disclose .inner{border-top:1px solid var(--line)}
+
+.kv{display:flex;justify-content:space-between;gap:14px;padding:9px 0;font-size:14px;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink-3)}
+.kv .v{font-family:var(--mono);font-weight:500;text-align:right}
+
+.ph-store{margin-bottom:14px}
+.ph-store .hd{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.ph-store .hd b{font-family:var(--disp);font-size:13px;font-weight:700}
+.ph-store .hd .rule{flex:1;height:1px;background:var(--line)}
+
+.selrow{display:flex;align-items:center;gap:4px;padding:8px 11px;min-height:60px}
+.selrow .cb{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center}
+.selrow .cb .box{
+  width:24px;height:24px;border-radius:7px;border:2px solid var(--line-2);
+  display:grid;place-items:center;color:transparent;background:var(--surface);
+}
+.selrow .cb .box svg{width:14px;height:14px;stroke-width:3}
+.selrow .cb[aria-checked="true"] .box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.selrow .price{padding-left:6px}
+/* meta data points separated by space, not orphan-prone interpuncts */
+.selrow .meta{gap:4px 10px}
+.selrow .meta .mi.num{white-space:nowrap}
+.selrow .meta .mi{overflow-wrap:anywhere;min-width:0}
+.row .meta{gap:4px 9px}
+.row .meta .mi{white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.li .subwrap .mi{white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%);z-index:80;
+  background:var(--ink);color:var(--ground);
+  padding:11px 17px;border-radius:11px;font-size:13.5px;font-weight:500;
+  box-shadow:var(--shadow-2);max-width:min(92vw,420px);
+  display:flex;align-items:center;gap:8px;text-align:left;
+  animation:rise .18s ease;
+}
+.toast svg{width:16px;height:16px;flex:0 0 16px;stroke-width:3}
+.toast.ok svg{color:var(--accent)}
+:root[data-theme="dark"] .toast.ok svg,
+:root:not([data-theme="light"]) .toast.ok svg{color:var(--accent)}
+/* brief highlight on the row that was just added */
+@keyframes flashrow{from{background:var(--accent-soft)}to{background:transparent}}
+@keyframes leaverow{to{opacity:0;transform:translateX(14px)}}
+.li.leaving{animation:leaverow .17s ease-in forwards;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.li.leaving{animation:none;opacity:.5}}
+.row.flash{animation:flashrow 1.1s ease-out}
+@media (prefers-reduced-motion:reduce){.row.flash{animation:none}}
+.banner{
+  display:flex;gap:9px;align-items:flex-start;
+  background:var(--warn-soft);border:1px solid var(--warn-line);color:var(--warn);
+  padding:12px 14px;border-radius:var(--r-sm);font-size:13px;line-height:1.45;margin-bottom:16px;
+}
+.banner svg{width:16px;height:16px;flex:0 0 16px;margin-top:1px}
+.skel{height:64px;border-radius:var(--r);background:var(--surface-2);margin-bottom:9px;opacity:.7}
+/* one type family, but figures still line up in columns */
+.kv .v,.row .price,.li .tot,.bar .cell .v,.pricebtn,.grouphd .n,.trip-card .total,
+.wtin input,.tab .badge,.sec-head .count,.fbadge,.cmp td,.pre input,.ph-store .kv .v{
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+}
+</style>
+
+<div class="appbar"><div class="wrap" id="appbar"></div></div>
+<main id="screens"><div class="wrap" id="screen"></div></main>
+<div id="barhost"></div>
+<nav class="tabs"><div class="wrap" id="tabs"></div></nav>
+<div id="sheets"></div>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Pantry Run — personal grocery manager
+   Domain objects kept separate: categories, stores, products,
+   shopping list, list items, purchase history, price history.
+   ============================================================ */
+
+/* ---------------- icons ---------------- */
+const I = {
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-5.5h5V20"/>',
+  book:'<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v18H5.5A1.5 1.5 0 0 1 4 19.5z"/><path d="M8 3v18"/><path d="M11.5 8.5h4"/><path d="M11.5 12h4"/>',
+  cart:'<circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17.5" cy="19.5" r="1.4"/><path d="M2.5 3.5h2.6l2.4 11.2h10.6l2-7.7H6.2"/>',
+  clock:'<circle cx="12" cy="12" r="8.6"/><path d="M12 7v5.3l3.4 2"/>',
+  plus:'<path d="M12 5v14"/><path d="M5 12h14"/>',
+  minus:'<path d="M5 12h14"/>',
+  check:'<path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>',
+  trash:'<path d="M4 6.5h16"/><path d="M9 6.5V4.5h6v2"/><path d="M6.5 6.5 7.5 20h9l1-13.5"/>',
+  x:'<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
+  gear:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/>',
+  back:'<path d="M15 4.5 7.5 12l7.5 7.5"/>',
+  car:'<path d="M9 5.5 15.5 12 9 18.5"/>',
+  alert:'<path d="M12 3.5 22 20H2z"/><path d="M12 9.5v4.2"/><path d="M12 16.8v.2"/>',
+  store:'<path d="M4 9.5h16V20H4z"/><path d="M3 9.5 5 4h14l2 5.5"/><path d="M9.5 20v-5h5v5"/>',
+  tag:'<path d="M3.5 11.5V3.5h8l9 9-8 8z"/><circle cx="8" cy="8" r="1.3"/>',
+  edit:'<path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13.5 6.5 17.5 10.5"/>',
+  refresh:'<path d="M20 5.5v5h-5"/><path d="M19.2 10.5A7.6 7.6 0 1 0 19.6 15"/>',
+  box:'<path d="M3.5 7.5h17v3h-17z"/><path d="M5 10.5V20h14v-9.5"/><path d="M10 14h4"/>',
+  star:'<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
+  filter:'<path d="M4 7.5h10M18 7.5h2M4 16.5h4M12 16.5h8"/><circle cx="16" cy="7.5" r="2.2"/><circle cx="8" cy="16.5" r="2.2"/>',
+  chart:'<path d="M4 19.5V4.5"/><path d="M4 19.5h16"/><path d="M7.5 15.5l3.5-4 3 2.5 4.5-6"/>',
+  calendar:'<rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17"/><path d="M8 3.5v4M16 3.5v4"/>',
+  download:'<path d="M12 4v11"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 19.5h15"/>',
+  upload:'<path d="M12 15.5V4.5"/><path d="M7.5 9 12 4.5 16.5 9"/><path d="M4.5 19.5h15"/>',
+  basket:'<path d="M3 9.5h18l-1.8 9.2a2 2 0 0 1-2 1.6H6.8a2 2 0 0 1-2-1.6z"/><path d="M8.5 9.5 12 3.5l3.5 6"/>',
+  undo:'<path d="M4 9.5h10a5 5 0 0 1 0 10H8"/><path d="M7.5 6 4 9.5 7.5 13"/>'
+};
+const svg = (k, cls) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"${cls?` class="${cls}"`:''} aria-hidden="true">${I[k]}</svg>`;
+
+/* ---------------- helpers ---------------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = p => p + '-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+/* grouped so four- and five-figure totals stay readable on a phone */
+/* Currency only changes how amounts are shown — nothing is converted. */
+const CURRENCIES = [
+  ['CAD', 'Canadian dollar'], ['USD', 'US dollar'], ['EUR', 'Euro'], ['GBP', 'British pound'],
+  ['AUD', 'Australian dollar'], ['NZD', 'New Zealand dollar'], ['MXN', 'Mexican peso'],
+  ['INR', 'Indian rupee'], ['JPY', 'Japanese yen'], ['CHF', 'Swiss franc']
+];
+const DEFAULT_CURRENCY = 'CAD';
+const moneyFmt = new Map();
+function currencyCode() {
+  const c = S && S.settings && S.settings.currency;
+  return CURRENCIES.some(x => x[0] === c) ? c : DEFAULT_CURRENCY;
+}
+function fmtFor(code) {
+  if (!moneyFmt.has(code)) {
+    let f;
+    try { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' }); }
+    catch (e) { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: code }); }
+    moneyFmt.set(code, f);
+  }
+  return moneyFmt.get(code);
+}
+const money = n => (n == null || !isFinite(n)) ? '—' : fmtFor(currencyCode()).format(Number(n));
+/* the bare symbol, for the prefix inside price fields */
+function currencySymbol(code) {
+  const part = fmtFor(code || currencyCode()).formatToParts(0).find(x => x.type === 'currency');
+  return part ? part.value : '$';
+}
+const WEIGHT_UNITS = ['lb', 'kg'];
+const defaultWeightUnit = () => WEIGHT_UNITS.includes(S.settings.weightUnit) ? S.settings.weightUnit : 'lb';
+const numfmt = n => { const v = Number(n); return Number.isInteger(v) ? String(v) : String(parseFloat(v.toFixed(3))); };
+const todayISO = () => new Date().toISOString();
+const clone = o => (o == null ? o : JSON.parse(JSON.stringify(o)));
+const parseNum = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : null; };
+function fmtDate(iso, long) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString(undefined, long
+    ? { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }
+    : { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function relDate(iso) {
+  if (!iso) return 'never';
+  const days = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return days + ' days ago';
+  const m = Math.round(days / 30);
+  return m + (m === 1 ? ' month ago' : ' months ago');
+}
+
+/* ---------------- state ---------------- */
+const DEFAULT_CATEGORIES = ['Produce', 'Meat', 'Dairy', 'Pantry', 'Frozen', 'Household', 'Personal Care'];
+
+const S = {
+  products: [], stores: [], categories: [],
+  settings: { taxRate: 13, id: 'app' },
+  active: null, trips: [],
+  ready: false, storageNote: null
+};
+let view = 'home';
+const ui = { catQuery: '', listGroup: 'category', pickQuery: '', sheet: null,
+  /* catalog filters: OR within a group, AND across groups. '_none' = unset. */
+  filters: { cats: new Set(), stores: new Set(), stock: new Set(), fav: false } };
+/* collapsed category/store groups, per screen: 'cat' | 'list' | 'pick' | 'mark' */
+ui.collapsed = { cat: new Set(), list: new Set(), pick: new Set(), mark: new Set() };
+const isCollapsed = (scope, key) => ui.collapsed[scope].has(String(key));
+/* One header for every grouped list, so collapsing works the same everywhere. */
+function groupHead(scope, key, label, count, right) {
+  const off = isCollapsed(scope, key);
+  return `<button class="grouphd" data-act="fold" data-scope="${scope}" data-key="${esc(String(key))}"
+      aria-expanded="${!off}" aria-label="${off ? 'Show' : 'Hide'} ${esc(label)}">
+      ${svg('car', 'car')}<h3>${esc(label)}</h3><span class="n">${count}</span><span class="rule"></span>${right || ''}
+    </button>`;
+}
+const filterCount = () => ui.filters.cats.size + ui.filters.stores.size + ui.filters.stock.size + (ui.filters.fav ? 1 : 0);
+
+const productById = id => S.products.find(p => p.id === id) || null;
+const storeById = id => S.stores.find(s => s.id === id) || null;
+const catById = id => S.categories.find(c => c.id === id) || null;
+const storeName = id => (storeById(id) || {}).name || 'Unassigned';
+const catName = id => (catById(id) || {}).name || 'Uncategorized';
+
+/* Archived stores and categories stay in the data so history keeps its names
+   and nothing tied to them is lost — they're just hidden from the choosers. */
+const activeStores = () => S.stores.filter(s => !s.archived);
+const activeCategories = () => S.categories.filter(c => !c.archived);
+const archivedStores = () => S.stores.filter(s => s.archived);
+const archivedCategories = () => S.categories.filter(c => c.archived);
+const isArchived = rec => !!(rec && rec.archived);
+/* choices for a picker: everything active, plus whatever is currently set
+   even if archived, so opening a picker can't silently drop the assignment */
+function choicesWithCurrent(all, currentId) {
+  const list = all.filter(x => !x.archived);
+  if (currentId && !list.some(x => x.id === currentId)) {
+    const cur = all.find(x => x.id === currentId);
+    if (cur) list.push(cur);
+  }
+  return list;
+}
+
+/* ---------------- persistence ---------------- */
+const LS_KEY = 'pantryrun.v1';
+let DB = null, backend = 'memory';
+
+const localBlob = () => {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch (e) { return {}; }
+};
+const localSave = obj => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch (e) { /* storage blocked */ }
+};
+const snapshotLocal = () => ({
+  products: S.products, stores: S.stores, categories: S.categories,
+  settings: S.settings, active: S.active, trips: S.trips
+});
+
+const queues = new Map();
+function enqueue(path, fn) {
+  const prev = queues.get(path) || Promise.resolve();
+  const next = prev.catch(() => {}).then(fn).catch(err => {
+    console.error('save failed', path, err);
+    toast('Couldn’t save that change.');
+  });
+  queues.set(path, next);
+  return next;
+}
+
+const Persist = {
+  saveProduct(p) {
+    if (backend === 'db') return enqueue('products/' + p.id, () => DB.doc('products/' + p.id).set(p));
+    localSave(snapshotLocal());
+  },
+  deleteProduct(id) {
+    if (backend === 'db') return enqueue('products/' + id, () => DB.doc('products/' + id).delete());
+    localSave(snapshotLocal());
+  },
+  saveMeta(key) {
+    if (backend === 'db') {
+      const body = key === 'settings' ? S.settings
+        : key === 'stores' ? { items: S.stores } : { items: S.categories };
+      return enqueue('meta/' + key, () => DB.doc('meta/' + key).set(body));
+    }
+    localSave(snapshotLocal());
+  },
+  saveActive() {
+    if (backend === 'db') {
+      return enqueue('lists/active', () => S.active
+        ? DB.doc('lists/active').set(S.active)
+        : DB.doc('lists/active').delete());
+    }
+    localSave(snapshotLocal());
+  },
+  saveTrip(t) {
+    if (backend === 'db') return enqueue('trips/' + t.id, () => DB.doc('trips/' + t.id).set(t));
+    localSave(snapshotLocal());
+  },
+  deleteTrip(id) {
+    if (backend === 'db') return enqueue('trips/' + id, () => DB.doc('trips/' + id).delete());
+    localSave(snapshotLocal());
+  }
+};
+
+async function boot() {
+  let db = null;
+  try { db = await window.claude?.use?.('db'); } catch (e) { db = null; }
+  if (db) {
+    DB = db; backend = 'db';
+    try {
+      const [prods, stores, cats, sets, act, trips] = await Promise.all([
+        db.collection('products').limit(1000).get(),
+        db.doc('meta/stores').get(),
+        db.doc('meta/categories').get(),
+        db.doc('meta/settings').get(),
+        db.doc('lists/active').get(),
+        db.collection('trips').orderBy('date', 'desc').limit(200).get()
+      ]);
+      /* Documents from the store are frozen and shared across reads —
+         mutating one throws. Everything the app edits must be its own copy. */
+      S.products = prods.docs.map(d => clone(d.data()));
+      S.stores = stores.exists ? clone(stores.data().items || []) : [];
+      S.categories = cats.exists ? clone(cats.data().items || []) : [];
+      S.settings = Object.assign({ taxRate: 13, id: 'app' }, sets.exists ? clone(sets.data()) : {});
+      S.active = act.exists ? clone(act.data()) : null;
+      S.trips = trips.docs.map(d => clone(d.data()));
+    } catch (e) {
+      console.error(e);
+      backend = 'local';
+      S.storageNote = 'Cloud storage didn’t respond — this device is saving locally for now.';
+    }
+  } else {
+    backend = 'local';
+  }
+  if (backend === 'local') {
+    const b = localBlob();
+    S.products = b.products || []; S.stores = b.stores || []; S.categories = b.categories || [];
+    S.settings = Object.assign({ taxRate: 13, id: 'app' }, b.settings || {});
+    S.active = b.active || null; S.trips = b.trips || [];
+  }
+  if (!S.categories.length) {
+    S.categories = DEFAULT_CATEGORIES.map((n, i) => ({ id: uid('cat'), name: n, order: i }));
+    Persist.saveMeta('categories');
+  }
+  S.products.sort((a, b) => a.name.localeCompare(b.name));
+  S.trips.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  await bootSafety();
+  S.ready = true;
+  render();
+}
+
+/* ---------------- domain: pricing ---------------- */
+function latestStorePrice(product, storeId) {
+  if (!product || !storeId) return null;
+  const hits = (product.priceHistory || []).filter(h => h.storeId === storeId && h.price != null);
+  if (!hits.length) return null;
+  hits.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  return hits[0].price;
+}
+function expectedPriceFor(product, storeId) {
+  if (!product) return null;
+  const sp = latestStorePrice(product, storeId);
+  return sp != null ? sp : (product.usualPrice != null ? product.usualPrice : null);
+}
+const effectiveUnitPrice = it => (it.actualPrice != null ? it.actualPrice : (it.expectedPrice != null ? it.expectedPrice : null));
+const itemAmount = it => (it.unitType === 'weight' ? (it.weight != null ? it.weight : 0) : (it.qty != null ? it.qty : 0));
+function itemTotal(it) {
+  const p = effectiveUnitPrice(it);
+  return p == null ? null : p * itemAmount(it);
+}
+function computeTotals(list) {
+  const t = { purchased: 0, remaining: 0, subtotal: 0, tax: 0, total: 0, missing: 0, checked: 0, open: 0 };
+  if (!list) return t;
+  for (const it of list.items) {
+    if (it.checked) t.checked++; else t.open++;
+    const amt = itemTotal(it);
+    if (amt == null) { t.missing++; continue; }
+    if (it.checked) t.purchased += amt; else t.remaining += amt;
+  }
+  t.subtotal = t.purchased + t.remaining;
+  /* Ontario: sales tax applies to the whole grocery subtotal */
+  t.tax = t.subtotal * ((Number(S.settings.taxRate) || 0) / 100);
+  t.total = t.subtotal + t.tax;
+  return t;
+}
+
+/* ---------------- domain: mutations ---------------- */
+function ensureActive() {
+  if (!S.active) {
+    S.active = { id: uid('list'), createdAt: todayISO(), items: [] };
+    Persist.saveActive();
+  }
+  return S.active;
+}
+function makeListItem(product, overrides) {
+  const storeId = (overrides && overrides.storeId !== undefined) ? overrides.storeId : (product.preferredStoreId || null);
+  const it = {
+    id: uid('li'), productId: product.id, name: product.name,
+    categoryId: product.categoryId || null, storeId,
+    unitType: product.unitType || 'unit', weightUnit: product.weightUnit || 'lb',
+    qty: product.defaultQty || 1,
+    weight: product.unitType === 'weight' ? (product.defaultWeight || 1) : null,
+    expectedPrice: expectedPriceFor(product, storeId),
+    actualPrice: null, checked: false, checkedAt: null
+  };
+  if (overrides) Object.assign(it, overrides);
+  return it;
+}
+function addProductToList(productId, overrides) {
+  const p = productById(productId);
+  if (!p) return null;
+  const list = ensureActive();
+  const existing = list.items.find(i => i.productId === productId && !i.checked);
+  if (existing) {
+    if (existing.unitType === 'weight') return { item: existing, note: p.name + ' is already on the list' };
+    existing.qty = (existing.qty || 1) + (p.defaultQty || 1);
+    Persist.saveActive();
+    return { item: existing, note: p.name + ' → qty ' + numfmt(existing.qty) };
+  }
+  const it = makeListItem(p, overrides);
+  list.items.push(it);
+  Persist.saveActive();
+  return { item: it, note: p.name + ' added to list' };
+}
+/* Category belongs to the product, so setting it from a list row updates the
+   catalog too — otherwise it would revert the next time the item is added. */
+function setItemCategory(it, categoryId) {
+  it.categoryId = categoryId;
+  Persist.saveActive();
+  const p = productById(it.productId);
+  if (p && p.categoryId !== categoryId) {
+    p.categoryId = categoryId;
+    saveProduct(p);
+  }
+}
+
+/* Undo an add: drop the still-unbought list item for this product. */
+function removeProductFromList(productId) {
+  if (!S.active) return false;
+  const i = S.active.items.findIndex(x => x.productId === productId && !x.checked);
+  if (i < 0) return false;
+  S.active.items.splice(i, 1);
+  Persist.saveActive();
+  return true;
+}
+function removeListItem(itemId) {
+  if (!S.active) return;
+  S.active.items = S.active.items.filter(i => i.id !== itemId);
+  Persist.saveActive();
+}
+const findItem = id => S.active ? S.active.items.find(i => i.id === id) : null;
+
+function saveProduct(p) {
+  delete p.taxable;           /* retired: tax now applies to the whole subtotal */
+  const i = S.products.findIndex(x => x.id === p.id);
+  if (i >= 0) S.products[i] = p; else S.products.push(p);
+  S.products.sort((a, b) => a.name.localeCompare(b.name));
+  Persist.saveProduct(p);
+}
+function blankProduct() {
+  return {
+    id: uid('p'), name: '', categoryId: activeCategories()[0] ? activeCategories()[0].id : null,
+    unitType: 'unit', usualPrice: null, weightUnit: defaultWeightUnit(),
+    defaultQty: 1, defaultWeight: 1,
+    packageSize: '', preferredStoreId: null, notes: '', shelfLife: '',
+    frequency: '', customFrequency: '', stock: 'in',
+    lastPurchased: null, typicalQty: null, lastStoreId: null, priceHistory: []
+  };
+}
+/* Adding a name that matches something archived brings the original back,
+   rather than making a second one that shares none of its history. */
+function addStore(name) {
+  const clean = String(name || '').trim();
+  if (!clean) return null;
+  const existing = S.stores.find(s => s.name.toLowerCase() === clean.toLowerCase());
+  if (existing) {
+    if (existing.archived) { delete existing.archived; Persist.saveMeta('stores'); return { rec: existing, restored: true }; }
+    return { rec: existing, duplicate: true };
+  }
+  const s = { id: uid('st'), name: clean };
+  S.stores.push(s);
+  Persist.saveMeta('stores');
+  return { rec: s };
+}
+function addCategory(name) {
+  const clean = String(name || '').trim();
+  if (!clean) return null;
+  const existing = S.categories.find(c => c.name.toLowerCase() === clean.toLowerCase());
+  if (existing) {
+    if (existing.archived) { delete existing.archived; Persist.saveMeta('categories'); return { rec: existing, restored: true }; }
+    return { rec: existing, duplicate: true };
+  }
+  const c = { id: uid('cat'), name: clean, order: S.categories.length };
+  S.categories.push(c);
+  Persist.saveMeta('categories');
+  return { rec: c };
+}
+
+/* Still Needed = unpurchased items from the most recent completed trip. */
+function stillNeeded() {
+  const t = S.trips[0];
+  if (!t) return [];
+  return (t.items || []).filter(i => !i.checked);
+}
+const onActiveList = productId => !!(S.active && S.active.items.some(i => i.productId === productId && !i.checked));
+
+/* The add/remove control used everywhere a catalog product is listed.
+   Off the list → "+". On the list → a solid tick that removes it again. */
+function listToggleBtn(p) {
+  return onActiveList(p.id)
+    ? `<button class="addbtn done" data-act="quick-remove" data-id="${p.id}"
+         aria-label="On your list — remove ${esc(p.name)}" title="On your list — tap to remove"
+         ><span class="i-on">${svg('check')}</span><span class="i-off">${svg('x')}</span></button>`
+    : `<button class="addbtn" data-act="quick-add" data-id="${p.id}"
+         aria-label="Add ${esc(p.name)} to list" title="Add to list">${svg('plus')}</button>`;
+}
+
+const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+let checkTimer = null;
+
+/* ---------------- toast ---------------- */
+let toastTimer = null;
+function toast(msg, kind) {
+  const host = document.getElementById('toasts');
+  host.innerHTML = `<div class="toast${kind === 'ok' ? ' ok' : ''}">${kind === 'ok' ? svg('check') : ''}<span>${esc(msg)}</span></div>`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { host.innerHTML = ''; }, kind === 'ok' ? 2000 : 3400);
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  renderAppbar();
+  renderTabs();
+  const el = document.getElementById('screen');
+  if (!S.ready) {
+    el.innerHTML = '<div class="sec"><div class="skel"></div><div class="skel"></div><div class="skel" style="height:120px"></div></div>';
+    document.getElementById('barhost').innerHTML = '';
+    document.body.classList.remove('has-bar');
+    return;
+  }
+  el.innerHTML = view === 'home' ? viewHome()
+    : view === 'catalog' ? viewCatalog()
+    : view === 'list' ? viewList()
+    : viewHistory();
+  renderBar();
+  const nav = document.querySelector('nav.tabs');
+  if (chromeRO && nav && !nav.dataset.obs) { nav.dataset.obs = '1'; chromeRO.observe(nav); }
+  if (view === 'catalog') {
+    const q = document.getElementById('catsearch');
+    if (q && ui.catQuery) { q.value = ui.catQuery; }
+  }
+}
+function go(v) { view = v; window.scrollTo(0, 0); render(); }
+
+function renderAppbar() {
+  const titles = {
+    home: ['Pantry Run', 'Groceries'],
+    catalog: ['Master Catalog', S.products.length + (S.products.length === 1 ? ' product' : ' products')],
+    list: ['Shopping List', fmtDate(todayISO())],
+    history: ['History', S.trips.length + (S.trips.length === 1 ? ' trip' : ' trips')]
+  };
+  const [t, sub] = titles[view];
+  const right = view === 'catalog'
+    ? `<button class="iconbtn" data-act="add-menu" aria-label="Add a product or category">${svg('plus')}</button>`
+    : view === 'home'
+      ? `<button class="iconbtn" data-act="settings" aria-label="Settings">${svg('gear')}</button>`
+      : '';
+  document.getElementById('appbar').innerHTML =
+    `<h1><span class="sub">${esc(sub)}</span>${esc(t)}</h1>${right}`;
+}
+
+function renderTabs() {
+  const open = S.active ? S.active.items.filter(i => !i.checked).length : 0;
+  const defs = [
+    ['home', 'home', 'Home'], ['catalog', 'book', 'Catalog'],
+    ['list', 'cart', 'List'], ['history', 'clock', 'History']
+  ];
+  document.getElementById('tabs').innerHTML = defs.map(([k, icon, label]) =>
+    `<button class="tab" role="tab" aria-selected="${view === k}" data-act="go" data-v="${k}">
+       ${svg(icon)}${k === 'list' && open ? `<span class="badge num">${open}</span>` : ''}
+       <span>${label}</span>
+     </button>`).join('');
+}
+
+/* ---------------- HOME ---------------- */
+function viewHome() {
+  const t = computeTotals(S.active);
+  const open = S.active ? S.active.items.filter(i => !i.checked).length : 0;
+  let h = '';
+
+  if (S.storageNote) {
+    h += `<div class="banner" style="margin-top:16px">${svg('alert')}<div>${esc(S.storageNote)}</div></div>`;
+  }
+
+  h += '<div class="sec">';
+  if (S.active && S.active.items.length) {
+    h += `<div class="trip-card">
+      <div class="line">
+        <div>
+          <div class="k">Current list</div>
+          <div class="items">${open} ${open === 1 ? 'item' : 'items'} to buy</div>
+          ${t.checked ? `<div class="k" style="margin-top:4px;letter-spacing:.04em;text-transform:none;font-family:var(--sans);font-size:12px">${t.checked} already picked up</div>` : ''}
+        </div>
+        <div style="text-align:right">
+          <div class="k">Expected total</div>
+          <div class="total">${money(t.total)}</div>
+        </div>
+      </div>
+      ${t.missing ? `<div class="miss">${svg('alert')}${t.missing} ${t.missing === 1 ? 'item is' : 'items are'} missing a price</div>` : ''}
+      <button class="btn primary block" data-act="go" data-v="list">${svg('cart')}Continue Shopping List</button>
+    </div>`;
+  } else {
+    h += `<div class="trip-card">
+      <div class="line"><div>
+        <div class="k">Current list</div>
+        <div class="items">No shopping list yet.</div>
+        <div class="k" style="margin-top:4px;letter-spacing:.04em;text-transform:none;font-family:var(--sans);font-size:12px">Build one from your catalog</div>
+      </div></div>
+      <button class="btn primary block" data-act="start-list">${svg('plus')}Start New List</button>
+    </div>`;
+  }
+  /* second action on Home, right under the list card */
+  if (S.products.length) {
+    h += `<button class="btn action block" data-act="mark-stock" style="margin-top:12px">${svg('tag')}Mark items low or needed</button>`;
+  }
+  h += '</div>';
+
+  /* Still Needed — like Running Low, an item drops off once it's on the list */
+  const outstanding = stillNeeded();
+  const sn = outstanding.filter(i => !onActiveList(i.productId));
+  h += `<div class="sec">
+    <div class="sec-head"><h2>Still Needed</h2><span class="count num">${sn.length}</span></div>`;
+  if (sn.length) {
+    h += `<div class="sec-note">Left unbought on your ${fmtDate(S.trips[0].date)} trip. Adding one takes it off this list.</div>
+      <div class="card stack">${sn.map(i => quickRow(i.productId, i.name, catName(i.categoryId))).join('')}</div>`;
+  } else if (outstanding.length) {
+    h += `<div class="empty">
+      <strong>All caught up</strong>
+      ${outstanding.length === 1 ? 'The item you didn’t buy last trip is' : `All ${outstanding.length} items you didn’t buy last trip are`} already on your shopping list.
+    </div>`;
+  } else if (S.trips.length) {
+    h += `<div class="empty">${svg('check', 'eicon')}You bought everything from your last trip.</div>`;
+  } else {
+    h += `<div class="empty">Items you leave unchecked when you finish a trip show up here.</div>`;
+  }
+  h += '</div>';
+
+  /* Running Low / Need to Buy */
+  /* once it's on the shopping list it's handled, so it drops off this list;
+     take it back off the list and it reappears here */
+  const marked = S.products.filter(p => p.stock === 'low' || p.stock === 'need');
+  const low = marked.filter(p => !onActiveList(p.id))
+    .sort((a, b) => (a.stock === 'need' ? 0 : 1) - (b.stock === 'need' ? 0 : 1) || a.name.localeCompare(b.name));
+  h += `<div class="sec">
+    <div class="sec-head"><h2>Running Low</h2><span class="count num">${low.length}</span></div>`;
+  if (low.length) {
+    h += `<div class="sec-note">Marked by you. Adding one takes it off this list.</div>
+      <div class="card stack">${low.map(p => quickRow(p.id, p.name, catName(p.categoryId),
+        p.stock === 'need' ? '<span class="pill need">Need to buy</span>' : '<span class="pill low">Running low</span>')).join('')}</div>`;
+  } else if (marked.length) {
+    h += `<div class="empty">
+      <strong>All caught up</strong>
+      ${marked.length === 1 ? 'The item you marked is' : `All ${marked.length} items you marked are`} already on your shopping list.
+    </div>`;
+  } else {
+    h += `<div class="empty">${svg('tag', 'eicon')}Nothing marked low right now.</div>`;
+  }
+  h += '</div>';
+  return h;
+}
+
+function quickRow(productId, name, category, pillHtml) {
+  const p = productById(productId);
+  const price = p ? expectedPriceFor(p, p.preferredStoreId) : null;
+  const gone = !p;
+  const inner = `
+      <div class="name">${esc(name)}</div>
+      <div class="meta">${esc(category)}${pillHtml ? '<span class="mi"><span class="dot">·</span>' + pillHtml + '</span>' : ''}
+        ${gone ? '<span class="mi">not in catalog</span>'
+               : `<span class="mi num">${price == null ? 'no price' : money(price)}</span>`}
+      </div>`;
+  return `<div class="row${gone ? '' : ' tappable'}"${gone ? '' : ` data-pid="${p.id}"`}>
+    ${gone
+      ? `<div class="body">${inner}</div>`
+      : `<button class="body" data-act="open-product" data-id="${p.id}" style="min-height:46px"
+           aria-label="Open ${esc(name)}">${inner}</button>`}
+    ${gone ? '' : listToggleBtn(p)}
+  </div>`;
+}
+
+/* ---------------- CATALOG ---------------- */
+function viewCatalog() {
+  if (!S.products.length) {
+    return `<div class="sec"><div class="empty">
+      <strong>Your catalog is empty</strong>
+      Add the groceries and household products you buy regularly — then build lists from them in a couple of taps.
+      <div class="btnrow" style="max-width:240px;margin-inline:auto"><button class="btn primary" data-act="new-product">${svg('plus')}Add a product</button></div>
+    </div></div>`;
+  }
+  const items = catalogMatches();
+  const nf = filterCount();
+
+  let h = `<div class="sec" style="margin-top:14px">
+    <div class="toolbar">
+      <input class="inp" id="catsearch" type="search" placeholder="Search the catalog" data-act="cat-search" autocomplete="off" aria-label="Search the catalog">
+      <button class="btn filterbtn${nf ? ' on' : ''}" data-act="open-filter" aria-label="Filter${nf ? ' — ' + nf + ' active' : ''}">
+        ${svg('filter')}<span>Filter</span>${nf ? `<span class="fbadge num">${nf}</span>` : ''}
+      </button>
+    </div>
+    ${nf ? activeFilterChips() : ''}
+    <div class="catcount">${items.length === S.products.length
+      ? `${S.products.length} ${S.products.length === 1 ? 'product' : 'products'}, grouped by category`
+      : `Showing ${items.length} of ${S.products.length}`}</div>
+  </div>`;
+
+  if (!items.length) {
+    return h + `<div class="sec"><div class="empty">
+      <strong>No matching items.</strong>
+      ${nf ? 'Try removing a filter.' : 'Try a different search.'}
+      <div class="btnrow" style="max-width:250px;margin-inline:auto">
+        ${nf ? `<button class="btn" data-act="clear-filters">Clear filters</button>` : ''}
+        <button class="btn" data-act="new-product">${svg('plus')}Add New Item</button>
+      </div>
+    </div></div>`;
+  }
+
+  for (const [key, label, arr] of groupByCategory(items)) {
+    h += `<div class="sec" style="margin-top:16px">
+      ${groupHead('cat', key, label, arr.length)}
+      ${isCollapsed('cat', key) ? '' : `<div class="card stack">${arr.map(catalogRow).join('')}</div>`}
+    </div>`;
+  }
+  h += `<div class="sec"><button class="btn block" data-act="add-menu">${svg('plus')}Add a product or category</button></div>`;
+  return h;
+}
+
+/* ---- duplicate detection ----
+   Warns, never blocks, never merges. Tuned to catch real near-duplicates
+   ("banana" vs "Bananas", "Milk" vs "Whole Milk 2L", "Bannanas" typos)
+   while leaving genuinely different versions alone ("Chicken Breast" vs
+   "Chicken Thighs", "Greek Yogurt 750g" vs "Greek Yogurt 500g"). */
+const DUP_STOP = new Set(['the', 'a', 'an', 'and', 'of', 'with', 'for']);
+/* size / packaging words — never the "main noun" of a product name */
+const DUP_PACK = new Set(['dozen', 'pack', 'pk', 'count', 'ct', 'box', 'bag', 'bottle', 'can', 'jar', 'carton',
+  'tub', 'family', 'value', 'size', 'bulk', 'large', 'small', 'medium', 'jumbo', 'mini', 'l', 'ml', 'g', 'kg', 'lb', 'oz']);
+function dupNorm(s) {
+  return String(s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')      /* café → cafe */
+    .replace(/&/g, ' and ')
+    .replace(/(\d)\s+(?=[a-z])/g, '$1')                      /* "2 L" → "2l" */
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function dupSingular(t) {
+  if (t.length <= 3 || /\d/.test(t)) return t;
+  if (t.endsWith('ies')) return t.slice(0, -3) + 'y';        /* berries → berry */
+  if (/(ches|shes|xes|sses|oes)$/.test(t)) return t.slice(0, -2); /* tomatoes → tomato */
+  if (t.endsWith('s') && !t.endsWith('ss')) return t.slice(0, -1);
+  return t;
+}
+const dupTokens = s => dupNorm(s).split(' ').filter(t => t && !DUP_STOP.has(t)).map(dupSingular);
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+/* 'same' | 'within' | 'spelling' | null */
+function dupReason(a, b) {
+  const ta = dupTokens(a), tb = dupTokens(b);
+  if (!ta.length || !tb.length) return null;
+  const ja = ta.join(' '), jb = tb.join(' ');
+  if (ja === jb) return 'same';
+  /* every word of one name appears in the other AND it shares the longer
+     name's main noun: "Milk" / "Whole Milk 2L" warns, "Apple" / "Apple Juice"
+     doesn't. The main noun is the last word that isn't a size or pack word. */
+  const sa = new Set(ta), sb = new Set(tb);
+  const [small, big, bigList] = sa.size <= sb.size ? [sa, sb, tb] : [sb, sa, ta];
+  if ([...small].every(t => big.has(t)) && [...small].some(t => t.length >= 3 && !/^\d/.test(t))) {
+    const head = [...bigList].reverse().find(t => !/^\d/.test(t) && !DUP_PACK.has(t));
+    if (!head || small.has(head)) return 'within';
+  }
+  /* a typo — tighter for short names so "Peas" and "Pears" stay separate */
+  const L = Math.max(ja.length, jb.length), d = levenshtein(ja, jb);
+  const allowed = L <= 4 ? 0 : L <= 7 ? 1 : 2;
+  if (d <= allowed && !/\d/.test(ja + jb)) return 'spelling';
+  /* same words in the same order with a one-letter slip in a longer word */
+  if (ta.length === tb.length && ta.length > 1 &&
+      ta.every((t, i) => t === tb[i] || (t.length >= 5 && !/\d/.test(t + tb[i]) && levenshtein(t, tb[i]) <= 1))) return 'spelling';
+  return null;
+}
+const DUP_RANK = { same: 0, spelling: 1, within: 2 };
+function findDuplicates(name, excludeId) {
+  if (!String(name || '').trim()) return [];
+  return S.products
+    .filter(p => p.id !== excludeId)
+    .map(p => ({ p, why: dupReason(name, p.name) }))
+    .filter(x => x.why)
+    .sort((x, y) => DUP_RANK[x.why] - DUP_RANK[y.why] || x.p.name.localeCompare(y.p.name))
+    .slice(0, 5);
+}
+
+function buildDupWarning(name, matches) {
+  const one = matches.length === 1 ? matches[0].p : null;
+  const where = p => p.categoryId ? catName(p.categoryId) : 'Uncategorized';
+  const lead = one
+    ? `<b>${esc(one.name)}</b> already exists in <b>${esc(where(one))}</b>.`
+    : `<b>${matches.length} similar products</b> are already in your catalog.`;
+  const why = { same: 'Same name', spelling: 'Very similar spelling', within: 'Overlapping name' };
+  return sheetHead('Possible duplicate', '“' + name + '”') + `
+    <div class="sheet-bd">
+      <div class="dupnote">${svg('alert')}<div>${lead} Add “${esc(name)}” anyway?</div></div>
+      <div class="card stack" style="margin-top:14px">
+        ${matches.map(({ p, why: w }) => {
+          const price = expectedPriceFor(p, p.preferredStoreId);
+          return `<div class="row duprow" data-pid="${p.id}">
+            <div class="body">
+              <div class="name">${esc(p.name)}</div>
+              <div class="meta">
+                <span class="mi">${esc(where(p))}</span>
+                ${p.preferredStoreId ? `<span class="mi">${esc(storeName(p.preferredStoreId))}</span>` : ''}
+                <span class="mi num">${price == null ? 'no price' : money(price) + (p.unitType === 'weight' ? '/' + (p.weightUnit || 'lb') : '')}</span>
+              </div>
+              <div class="dupwhy">${why[w]}</div>
+            </div>
+            <button class="btn sm" data-act="dup-open" data-id="${p.id}">Open existing</button>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="hint" style="margin-top:12px">Different brands, sizes or versions are fine as separate products — nothing gets merged.</div>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="close">Keep editing</button>
+      <button class="btn primary" data-act="dup-add-anyway">Add anyway</button>
+    </div>`;
+}
+
+/* ---- catalog filtering ---- */
+function catalogMatches() {
+  const q = ui.catQuery.trim().toLowerCase();
+  const f = ui.filters;
+  return S.products.filter(p => {
+    if (q && !p.name.toLowerCase().includes(q) && !catName(p.categoryId).toLowerCase().includes(q)) return false;
+    if (f.cats.size && !f.cats.has(p.categoryId || '_none')) return false;
+    if (f.stores.size && !f.stores.has(p.preferredStoreId || '_none')) return false;
+    if (f.stock.size && !f.stock.has(p.stock || 'in')) return false;
+    if (f.fav && !p.favourite) return false;
+    return true;
+  });
+}
+const STOCK_LABEL = { in: 'In stock', low: 'Running low', need: 'Need to buy' };
+
+/* the filters in play, each removable on its own */
+function activeFilterChips() {
+  const f = ui.filters, chips = [];
+  f.cats.forEach(id => chips.push(['cats', id, id === '_none' ? 'Uncategorized' : catName(id)]));
+  f.stores.forEach(id => chips.push(['stores', id, id === '_none' ? 'No preferred store' : storeName(id)]));
+  f.stock.forEach(v => chips.push(['stock', v, STOCK_LABEL[v]]));
+  if (f.fav) chips.push(['fav', '1', 'Favourites']);
+  return `<div class="chips afchips" style="margin-top:10px">
+    ${chips.map(([g, v, label]) => `<button class="chip on" data-act="drop-filter" data-g="${g}" data-v="${esc(v)}"
+        aria-label="Remove filter: ${esc(label)}">${g === 'fav' ? svg('star', 'cstar') : ''}${esc(label)}${svg('x', 'cx')}</button>`).join('')}
+    <button class="chip ghost" data-act="clear-filters">Clear all</button>
+  </div>`;
+}
+
+/* Options offered in the filter sheet. Archived stores and categories only
+   appear if a product still points at them, so nothing becomes unfindable. */
+function filterOptions() {
+  const catsUsed = new Set(S.products.map(p => p.categoryId || '_none'));
+  const storesUsed = new Set(S.products.map(p => p.preferredStoreId || '_none'));
+  const cats = S.categories.filter(c => !c.archived || catsUsed.has(c.id))
+    .map(c => [c.id, c.name + (c.archived ? ' (archived)' : '')]);
+  if (catsUsed.has('_none')) cats.push(['_none', 'Uncategorized']);
+  const stores = S.stores.filter(s => !s.archived || storesUsed.has(s.id))
+    .map(s => [s.id, s.name + (s.archived ? ' (archived)' : '')]);
+  if (storesUsed.has('_none')) stores.push(['_none', 'No preferred store']);
+  return { cats, stores };
+}
+function countWith(group, value) {
+  /* how many products match if this option were toggled on alongside the rest */
+  const saved = ui.filters[group];
+  const trial = new Set(saved); trial.add(value);
+  ui.filters[group] = trial;
+  const n = catalogMatches().length;
+  ui.filters[group] = saved;
+  return n;
+}
+function buildFilter() {
+  const f = ui.filters, o = filterOptions();
+  const chip = (group, value, label) => {
+    const on = f[group].has(value);
+    const n = on ? null : countWith(group, value);
+    return `<button class="chip${on ? ' on' : ''}${n === 0 ? ' zero' : ''}" data-act="toggle-filter" data-g="${group}" data-v="${esc(value)}"
+      aria-pressed="${on}">${esc(label)}<span class="cn num">${on ? '' : n}</span></button>`;
+  };
+  const n = catalogMatches().length;
+  return sheetHead('Filter the catalog', filterCount() ? filterCount() + ' active' : 'Nothing selected — showing everything') + `
+    <div class="sheet-bd">
+      <div class="fgroup">
+        <span class="flabel">Favourites</span>
+        <div class="fchips">
+          <button class="chip${f.fav ? ' on' : ''}" data-act="toggle-filter" data-g="fav" data-v="1" aria-pressed="${f.fav}">
+            ${svg('star', 'cstar')}Favourites only<span class="cn num">${f.fav ? '' : S.products.filter(p => p.favourite).length}</span></button>
+        </div>
+      </div>
+      <div class="fgroup">
+        <span class="flabel">Stock status</span>
+        <div class="fchips">${['in', 'low', 'need'].map(v => chip('stock', v, STOCK_LABEL[v])).join('')}</div>
+      </div>
+      <div class="fgroup">
+        <span class="flabel">Category</span>
+        <div class="fchips">${o.cats.map(([id, name]) => chip('cats', id, name)).join('') || '<span class="hint">No categories yet.</span>'}</div>
+      </div>
+      <div class="fgroup">
+        <span class="flabel">Preferred store</span>
+        <div class="fchips">${o.stores.map(([id, name]) => chip('stores', id, name)).join('') || '<span class="hint">No stores yet.</span>'}</div>
+      </div>
+      <div class="hint">Pick several in one group to widen it; picking across groups narrows it down.</div>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn fclear" data-act="clear-filters"${filterCount() ? '' : ' disabled'}>Clear all</button>
+      <button class="btn primary fshow" data-act="close">Show ${n} ${n === 1 ? 'product' : 'products'}</button>
+    </div>`;
+}
+function sheetFilter() { showSheet(buildFilter, {}, 'root'); }
+function clearFilters() {
+  ui.filters.cats.clear(); ui.filters.stores.clear(); ui.filters.stock.clear(); ui.filters.fav = false;
+}
+
+/* ---- add-to-catalog menu ---- */
+function buildAddMenu() {
+  return sheetHead('Add to catalog') + `
+    <div class="sheet-bd">
+      <div class="card stack">
+        <button class="row tappable" data-act="new-product" style="width:100%">
+          <span class="addbtn" aria-hidden="true">${svg('plus')}</span>
+          <div class="body"><div class="name">New product</div>
+          <div class="meta">Something you buy — its price, quantity and store</div></div>
+          <span class="iconbtn" style="width:24px;flex:0 0 24px;height:24px;color:var(--ink-3)">${svg('car')}</span>
+        </button>
+      </div>
+      <div class="field" style="margin-top:18px">
+        <label for="menu-newcat">New category</label>
+        <div style="display:flex;gap:9px">
+          <input class="inp" id="menu-newcat" placeholder="e.g. Bakery" autocomplete="off">
+          <button class="btn" data-act="menu-add-cat" style="flex:0 0 auto">Add</button>
+        </div>
+        <div class="hint">Shows up straight away in the catalog, filters and pickers.</div>
+      </div>
+    </div>`;
+}
+
+function catalogRow(p) {
+  const price = expectedPriceFor(p, p.preferredStoreId);
+  const unit = p.unitType === 'weight' ? '/' + (p.weightUnit || 'lb') : '';
+  const qty = p.unitType === 'weight' ? numfmt(p.defaultWeight || 1) + ' ' + (p.weightUnit || 'lb') : '×' + numfmt(p.defaultQty || 1);
+  return `<div class="row tappable" data-pid="${p.id}">
+    <button class="body" data-act="open-product" data-id="${p.id}" style="min-height:46px">
+      <div class="name">${esc(p.name)}</div>
+      <div class="meta">
+        <span class="mi num">${price == null ? 'No price yet' : money(price) + unit}</span>
+        <span class="mi"><span class="dot">·</span><span class="num">${esc(qty)}</span></span>
+        ${p.unitType === 'weight' ? '<span class="pill wt">By weight</span>' : ''}
+        ${p.stock === 'low' ? '<span class="pill low">Low</span>' : ''}
+        ${p.stock === 'need' ? '<span class="pill need">Need</span>' : ''}
+      </div>
+    </button>
+    ${favBtn(p)}
+    ${listToggleBtn(p)}
+  </div>`;
+}
+function favBtn(p) {
+  return `<button class="favbtn" data-act="toggle-fav" data-id="${p.id}" aria-pressed="${!!p.favourite}"
+    aria-label="${p.favourite ? 'Remove ' + esc(p.name) + ' from favourites' : 'Add ' + esc(p.name) + ' to favourites'}"
+    title="${p.favourite ? 'Favourite' : 'Add to favourites'}">${svg('star')}</button>`;
+}
+
+/* ---------------- SHOPPING LIST ---------------- */
+function viewList() {
+  const list = S.active;
+  if (!list || !list.items.length) {
+    return `<div class="sec"><div class="empty">
+      ${svg('cart', 'eicon')}
+      <strong>${list ? 'This list is empty' : 'No shopping list yet.'}</strong>
+      Add products from your Master Catalog to start a trip.
+      <div class="btnrow" style="max-width:280px;margin-inline:auto;flex-direction:column">
+        <button class="btn primary block" data-act="pick-items">${svg('plus')}Add items from catalog</button>
+        <button class="btn block" data-act="go" data-v="catalog">${svg('book')}Browse Master Catalog</button>
+      </div>
+    </div></div>`;
+  }
+  const open = list.items.filter(i => !i.checked);
+  const done = list.items.filter(i => i.checked);
+
+  let h = `<div class="sec" style="margin-top:14px">
+    <div class="seg" role="group" aria-label="Group items by">
+      <button data-act="group" data-v="store" aria-pressed="${ui.listGroup === 'store'}">By Store</button>
+      <button data-act="group" data-v="category" aria-pressed="${ui.listGroup === 'category'}">By Category</button>
+    </div>
+  </div>`;
+
+  if (!open.length) {
+    h += `<div class="sec"><div class="empty">
+      <strong>Everything is checked off</strong>
+      ${done.length} ${done.length === 1 ? 'item' : 'items'} in the cart. Finish the trip to file it in History.
+    </div></div>`;
+  } else {
+    const groups = new Map();
+    for (const it of open) {
+      const k = ui.listGroup === 'store' ? (it.storeId || '_un') : (it.categoryId || '_none');
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(it);
+    }
+    const order = ui.listGroup === 'store'
+      ? S.stores.map(s => s.id).concat(['_un'])
+      : S.categories.map(c => c.id).concat(['_none']);
+    const keys = [...groups.keys()].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    for (const k of keys) {
+      const arr = groups.get(k);
+      const label = ui.listGroup === 'store'
+        ? (k === '_un' ? 'Unassigned' : storeName(k))
+        : (k === '_none' ? 'Uncategorized' : catName(k));
+      const sum = arr.reduce((a, it) => { const t = itemTotal(it); return t == null ? a : a + t; }, 0);
+      h += `<div class="sec" style="margin-top:14px">
+        ${groupHead('list', ui.listGroup + ':' + k, label, arr.length, `<span class="n">${money(sum)}</span>`)}
+        ${isCollapsed('list', ui.listGroup + ':' + k) ? '' : `<div class="card stack">${arr.map(listItemRow).join('')}</div>`}
+      </div>`;
+    }
+  }
+
+  h += `<div class="sec"><button class="btn block" data-act="pick-items">${svg('plus')}Add items from catalog</button></div>`;
+
+  if (done.length) {
+    h += `<details class="disclose" ${ui.showDone ? 'open' : ''} data-act="toggle-done">
+      <summary>${svg('car', 'car')}Completed Items<span class="n">${done.length} · ${money(done.reduce((a, it) => { const t = itemTotal(it); return t == null ? a : a + t; }, 0))}</span></summary>
+      <div class="inner stack">${done.map(listItemRow).join('')}</div>
+    </details>`;
+  }
+  return h;
+}
+
+function listItemRow(it) {
+  const p = productById(it.productId);
+  const unitPrice = effectiveUnitPrice(it);
+  const total = itemTotal(it);
+  const isActual = it.actualPrice != null;
+  const perUnit = it.unitType === 'weight' ? '/' + (it.weightUnit || 'lb') : ' ea';
+  const priceCls = unitPrice == null ? 'missing' : (isActual ? 'actual' : '');
+  const priceLabel = unitPrice == null ? 'Add price' : money(unitPrice) + `<span class="ea">${perUnit}</span>`;
+
+  const control = it.unitType === 'weight'
+    ? `<div class="wtin">
+         <input type="text" inputmode="decimal" value="${it.weight != null ? esc(numfmt(it.weight)) : ''}"
+                data-act="weight" data-id="${it.id}" id="w-${it.id}" aria-label="Weight for ${esc(it.name)}">
+         <span class="u">${esc(it.weightUnit || 'lb')}</span>
+       </div>`
+    : `<div class="stepper">
+         <button data-act="qty" data-id="${it.id}" data-d="-1" class="${(it.qty || 1) <= 1 ? 'del' : ''}"
+                 aria-label="${(it.qty || 1) <= 1 ? 'Remove ' + esc(it.name) : 'Decrease quantity'}">${svg((it.qty || 1) <= 1 ? 'trash' : 'minus')}</button>
+         <span class="v">${numfmt(it.qty || 1)}</span>
+         <button data-act="qty" data-id="${it.id}" data-d="1" aria-label="Increase quantity">${svg('plus')}</button>
+       </div>`;
+
+  return `<div class="li ${it.checked ? 'done' : ''}">
+    <button class="check" role="checkbox" aria-checked="${it.checked}" data-act="check" data-id="${it.id}"
+            aria-label="${it.checked ? 'Uncheck' : 'Check off'} ${esc(it.name)}"><span class="box">${svg('check')}</span></button>
+    <div class="main">
+      <div class="top">
+        <div class="nm">${esc(it.name)}${p ? '' : ' <span class="pill">Removed</span>'}</div>
+        <div class="tot ${total == null ? 'missing' : ''}">${total == null ? 'No price' : money(total)}</div>
+      </div>
+      <div class="sub">
+        <div class="subwrap">
+          <button class="chipbtn catbtn${it.categoryId ? '' : ' unset'}" data-act="category" data-id="${it.id}"
+            aria-label="${it.categoryId ? 'Category: ' + esc(catName(it.categoryId)) + ' — change it' : 'Set a category for ' + esc(it.name)}"
+            >${it.categoryId ? esc(catName(it.categoryId)) : 'Set category'}</button>
+          <button class="chipbtn storebtn" data-act="store" data-id="${it.id}"
+            aria-label="Store: ${esc(it.storeId ? storeName(it.storeId) : 'Unassigned')} — change it"
+            >${esc(it.storeId ? storeName(it.storeId) : 'Unassigned')}</button>
+          ${isActual && it.expectedPrice != null ? `<span class="mi"><span class="dot">·</span><span class="num">was ${money(it.expectedPrice)}${perUnit}</span></span>` : ''}
+        </div>
+        <button class="rm" data-act="remove" data-id="${it.id}" aria-label="Remove ${esc(it.name)} from list">${svg('x')}</button>
+      </div>
+      <div class="ctl">
+        ${control}
+        <button class="pricebtn ${priceCls}" data-act="price" data-id="${it.id}">${priceLabel}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- totals bar ---------------- */
+function renderBar() {
+  const host = document.getElementById('barhost');
+  if (view !== 'list' || !S.active || !S.active.items.length) {
+    host.innerHTML = '';
+    document.body.classList.remove('has-bar');
+    measureChrome();
+    return;
+  }
+  const t = computeTotals(S.active);
+  const shopping = t.checked > 0;
+  const missNote = t.missing
+    ? `<div class="miss">${svg('alert')}${t.missing} ${t.missing === 1 ? 'item has' : 'items have'} no price — estimate is incomplete</div>` : '';
+
+  host.innerHTML = `<div class="bar"><div class="wrap">
+    <div class="grid">
+      ${shopping ? `
+        <div class="cell"><div class="k">Purchased so far</div><div class="v num">${money(t.purchased)}</div></div>
+        <div class="cell"><div class="k">Remaining expected</div><div class="v num">${money(t.remaining)}</div></div>
+        <div class="cell"><div class="k">Est. sales tax (${numfmt(S.settings.taxRate)}%)</div><div class="v num">${money(t.tax)}</div></div>
+        <div class="cell big acc"><div class="k">Projected final total</div><div class="v num">${money(t.total)}</div></div>
+      ` : `
+        <div class="cell"><div class="k">Expected subtotal</div><div class="v num">${money(t.subtotal)}</div></div>
+        <div class="cell"><div class="k">Est. sales tax (${numfmt(S.settings.taxRate)}%)</div><div class="v num">${money(t.tax)}</div></div>
+        <div class="cell big acc" style="grid-column:1/-1"><div class="k">Expected total</div><div class="v num">${money(t.total)}</div></div>
+      `}
+      ${missNote}
+      ${shopping ? `<div class="fin"><button class="btn primary block" data-act="finish">${svg('check')}Finish Trip</button></div>` : ''}
+    </div>
+  </div></div>`;
+  document.body.classList.add('has-bar');
+  measureChrome();
+}
+
+/* The nav and totals bar are fixed; measure them so #screens always reserves
+   exactly enough room and nothing sits under them at any width. */
+function measureChrome() {
+  const nav = document.querySelector('nav.tabs');
+  const bar = document.querySelector('.bar');
+  const r = document.documentElement;
+  if (nav) r.style.setProperty('--nav-h', Math.ceil(nav.offsetHeight) + 'px');
+  if (bar) {
+    const navH = nav ? nav.offsetHeight : 0;
+    r.style.setProperty('--bar-h', Math.ceil(bar.offsetHeight - navH) + 'px');
+  } else {
+    r.style.removeProperty('--bar-h');
+  }
+}
+let chromeRO;
+if (typeof ResizeObserver !== 'undefined') {
+  chromeRO = new ResizeObserver(() => measureChrome());
+}
+window.addEventListener('resize', measureChrome);
+window.addEventListener('orientationchange', () => setTimeout(measureChrome, 120));
+
+/* ---------------- HISTORY ---------------- */
+function viewHistory() {
+  if (!S.trips.length) {
+    return `<div class="sec"><div class="empty">
+      ${svg('clock', 'eicon')}
+      <strong>Completed shopping trips will appear here.</strong>
+      Finish a shopping list and it lands here with everything you bought, what you paid and where.
+    </div></div>`;
+  }
+  let h = '';
+  if (S.trips[0]) {
+    h += `<div class="sec"><button class="btn block" data-act="repeat" data-id="${S.trips[0].id}">${svg('refresh')}Repeat Last Trip</button>
+      <div class="sec-note" style="margin-top:8px;text-align:center">Copies ${S.trips[0].name ? '“' + esc(S.trips[0].name) + '”' : 'your ' + fmtDate(S.trips[0].date) + ' trip'} into an editable list.</div></div>`;
+  }
+  h += `<div class="sec"><div class="sec-head"><h2>Previous Trips</h2><span class="count num">${S.trips.length}</span></div><div class="card stack">`;
+  for (const t of S.trips) {
+    const bought = (t.items || []).filter(i => i.checked).length;
+    const stores = [...new Set((t.items || []).filter(i => i.checked && i.storeId).map(i => storeName(i.storeId)))];
+    h += `<button class="row tappable" data-act="open-trip" data-id="${t.id}" style="width:100%">
+      <div class="body">
+        <div class="name">${esc(tripTitle(t))}</div>
+        <div class="meta">
+          ${t.name ? `<span>${esc(fmtDate(t.date))}</span><span class="dot">·</span>` : ''}
+          <span class="num">${bought} of ${(t.items || []).length} bought</span>
+          ${stores.length ? '<span class="dot">·</span><span>' + esc(stores.join(', ')) + '</span>' : ''}
+        </div>
+      </div>
+      <div class="price">${money(t.totals ? t.totals.total : null)}</div>
+      <span class="iconbtn" style="width:24px;flex:0 0 24px;height:24px">${svg('car')}</span>
+    </button>`;
+  }
+  h += '</div></div>';
+  return h;
+}
+
+/* ============================================================
+   SHEETS
+   ============================================================ */
+/* Sheets are a stack, so drilling from Settings into a store or category
+   layers on top of Settings instead of replacing it — whatever is behind a
+   sheet is the screen you came from, never the page underneath. Each layer
+   keeps a builder rather than fixed markup, so every layer re-derives from
+   current state whenever the stack is redrawn. */
+let sheetStack = [];
+
+function renderSheets() {
+  const host = document.getElementById('sheets');
+  if (!sheetStack.length) {
+    ui.sheet = null; ui.drill = null;
+    host.innerHTML = '';
+    document.body.style.overflow = '';
+    return;
+  }
+  /* keep whatever is typed in a product form across a redraw — including
+     when another sheet is layered on top of the form */
+  const top = sheetStack[sheetStack.length - 1];
+  const draftLayer = sheetStack.find(e => e.opts && e.opts.draft);
+  if (draftLayer && document.getElementById('f-name')) syncDraft(draftLayer.opts.draft);
+  /* remember where each layer was scrolled to */
+  const scrolls = [...host.querySelectorAll('.scrim .sheet-bd')].map(el => el.scrollTop);
+
+  host.innerHTML = sheetStack.map((entry, i) => {
+    const isTop = i === sheetStack.length - 1;
+    return `<div class="scrim${isTop ? '' : ' under'}"${isTop ? ' data-act="scrim"' : ''}>
+      <div class="sheet"${isTop ? ' role="dialog" aria-modal="true"' : ' inert aria-hidden="true"'}>${entry.build()}</div>
+    </div>`;
+  }).join('');
+  document.body.style.overflow = 'hidden';
+  ui.sheet = top.opts;
+  host.querySelectorAll('.scrim .sheet-bd').forEach((el, i) => { if (scrolls[i]) el.scrollTop = scrolls[i]; });
+  const f = document.querySelector('.scrim:last-child .sheet [data-autofocus]');
+  if (f) setTimeout(() => { f.focus(); if (f.select) f.select(); }, 60);
+}
+
+/* mode: 'root' replaces the whole stack, 'push' layers on top */
+function showSheet(build, opts, mode) {
+  const entry = { build, opts: opts || {} };
+  if (mode === 'push') sheetStack.push(entry); else sheetStack = [entry];
+  renderSheets();
+}
+function openSheet(html, opts) { showSheet(() => html, opts, 'root'); }
+function closeSheet() { sheetStack = []; renderSheets(); }
+/* Step back one layer: product → store/category → Settings → page. */
+function dismissSheet() {
+  sheetStack.pop();
+  if (!sheetStack.length) { closeSheet(); return; }
+  const t = sheetStack[sheetStack.length - 1].opts;
+  ui.drill = (t && (t.kind === 'store' || t.kind === 'cat')) ? { kind: t.kind, id: t.id } : null;
+  renderSheets();
+}
+const sheetIsOpen = () => sheetStack.length > 0;
+
+/* After a product goes on or off the list, redraw the open sheets (every
+   layer rebuilds itself) and highlight the row that moved. */
+function syncOpenSheet(productId) {
+  if (!sheetIsOpen()) return;
+  const res = document.getElementById('pickres');
+  if (res) {
+    /* patch just the results so the search box keeps focus mid-typing */
+    res.innerHTML = pickResults(pickMatches());
+  } else {
+    renderSheets();
+  }
+  const row = document.querySelector(`.scrim:last-child .sheet [data-pid="${productId}"]`);
+  if (row) row.classList.add('flash');
+}
+const sheetHead = (title, sub, extra) =>
+  `<div class="sheet-hd"><h2>${esc(title)}${sub ? `<span class="sub">${esc(sub)}</span>` : ''}</h2>
+   ${extra || ''}<button class="iconbtn" data-act="close" aria-label="Close">${svg('x')}</button></div>`;
+
+/* ---- price editor (expected vs actual) ---- */
+function sheetPrice(itemId) {
+  const it = findItem(itemId); if (!it) return;
+  const per = it.unitType === 'weight' ? 'per ' + (it.weightUnit || 'lb') : 'each';
+  openSheet(sheetHead(it.name, 'Shelf price ' + per) + `
+    <div class="sheet-bd">
+      <div class="kv"><span class="k">Expected ${esc(per)}</span><span class="v">${it.expectedPrice == null ? 'not set' : money(it.expectedPrice)}</span></div>
+      <div class="field" style="margin-top:16px">
+        <label for="pr-in">Actual shelf price</label>
+        <div class="pre"><span class="sym">${esc(currencySymbol())}</span>
+          <input id="pr-in" type="text" inputmode="decimal" data-autofocus placeholder="0.00"
+                 value="${it.actualPrice != null ? esc(it.actualPrice.toFixed(2)) : ''}">
+          <span class="suf">${esc(per)}</span></div>
+        <div class="hint">Used for this trip and saved to price history when you finish. Your catalog’s usual price stays as it is — you’ll be asked at the end of the trip.</div>
+      </div>
+      ${it.actualPrice != null ? `<button class="btn block danger" data-act="price-clear" data-id="${it.id}">Clear actual price</button>` : ''}
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="close">Cancel</button>
+      <button class="btn primary" data-act="price-save" data-id="${it.id}">Save price</button>
+    </div>`);
+}
+
+/* ---- store picker ---- */
+function sheetStore(itemId) {
+  const it = findItem(itemId); if (!it) return;
+  openSheet(sheetHead('Assign a store', it.name) + `
+    <div class="sheet-bd">
+      <div class="card stack">
+        <button class="row tappable" data-act="set-store" data-id="${it.id}" data-store="" style="width:100%">
+          <div class="body"><div class="name">Unassigned</div><div class="meta">Grouped under “Unassigned” in Store view</div></div>
+          ${!it.storeId ? `<span class="addbtn mark">${svg('check')}</span>` : ''}
+        </button>
+        ${choicesWithCurrent(S.stores, it.storeId).map(s => `<button class="row tappable" data-act="set-store" data-id="${it.id}" data-store="${s.id}" style="width:100%">
+          <div class="body"><div class="name">${esc(s.name)}${isArchived(s) ? ' <span class="pill">Archived</span>' : ''}</div>
+          <div class="meta">${(() => { const p = productById(it.productId); const sp = p ? latestStorePrice(p, s.id) : null; return sp == null ? 'No saved price here' : '<span class="num">last ' + money(sp) + '</span>'; })()}</div></div>
+          ${it.storeId === s.id ? `<span class="addbtn mark">${svg('check')}</span>` : ''}
+        </button>`).join('')}
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label for="newstore">Add a store</label>
+        <div style="display:flex;gap:9px">
+          <input class="inp" id="newstore" placeholder="Store name" autocomplete="off">
+          <button class="btn" data-act="add-store-for" data-id="${it.id}" style="flex:0 0 auto">Add</button>
+        </div>
+        <div class="hint">Saved stores stay available for every product and list.</div>
+      </div>
+    </div>`);
+}
+
+/* ---- quick-mark stock from the whole catalog ---- */
+function markMatches() {
+  const q = (ui.markQuery || '').trim().toLowerCase();
+  return S.products.filter(p => !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q));
+}
+function stockPills(p) {
+  return `<div class="stockset">
+    <button class="stockbtn low" data-act="set-stock-quick" data-id="${p.id}" data-v="low"
+      aria-pressed="${p.stock === 'low'}" aria-label="${esc(p.name)}: running low">Low</button>
+    <button class="stockbtn need" data-act="set-stock-quick" data-id="${p.id}" data-v="need"
+      aria-pressed="${p.stock === 'need'}" aria-label="${esc(p.name)}: need to buy">Need</button>
+  </div>`;
+}
+function markResults() {
+  if (!S.products.length) return `<div class="empty">Your catalog is empty. Add products in the Catalog tab first.</div>`;
+  const items = markMatches();
+  if (!items.length) return `<div class="empty">No products match.</div>`;
+  return groupByCategory(items).map(([key, label, arr]) => `
+    ${groupHead('mark', key, label, arr.length)}
+    ${isCollapsed('mark', key) ? '' : `<div class="card stack">${arr.map(p => `<div class="row markrow" data-pid="${p.id}">
+      <div class="body">
+        <div class="name">${esc(p.name)}</div>
+        <div class="meta"><span class="mi num">${(() => { const v = expectedPriceFor(p, p.preferredStoreId);
+          return v == null ? 'no price' : money(v) + (p.unitType === 'weight' ? '/' + (p.weightUnit || 'lb') : ''); })()}</span>${
+          onActiveList(p.id) ? '<span class="mi" style="color:var(--accent)">on your list</span>' : ''}</div>
+      </div>
+      ${stockPills(p)}
+    </div>`).join('')}</div>`}`).join('');
+}
+function buildMarkStock() {
+  const n = S.products.filter(p => p.stock === 'low' || p.stock === 'need').length;
+  return sheetHead('Mark what you need', n ? n + ' marked so far' : 'Tap Low or Need on anything') + `
+    <div class="sheet-bd">
+      <input class="inp" id="markq" type="search" placeholder="Search your catalog" data-act="mark-search"
+             autocomplete="off" value="${esc(ui.markQuery || '')}" aria-label="Search your catalog">
+      <div class="hint" style="margin:8px 2px 0">Tap again to clear a mark. Marked items appear on Home under Running Low.</div>
+      <div id="markres" style="margin-top:6px">${markResults()}</div>
+    </div>
+    <div class="sheet-ft"><button class="btn primary" data-act="close">Done</button></div>`;
+}
+function sheetMarkStock() { ui.markQuery = ''; showSheet(buildMarkStock, {}, 'root'); }
+
+/* ---- category picker for a list item ---- */
+function sheetCategoryPick(itemId) {
+  const it = findItem(itemId); if (!it) return;
+  const inCatalog = !!productById(it.productId);
+  openSheet(sheetHead('Choose a category', it.name) + `
+    <div class="sheet-bd">
+      <div class="card stack">
+        ${choicesWithCurrent(S.categories, it.categoryId).map(c => `<button class="row tappable" data-act="set-cat" data-id="${it.id}" data-cat="${c.id}" style="width:100%">
+          <div class="body"><div class="name">${esc(c.name)}${isArchived(c) ? ' <span class="pill">Archived</span>' : ''}</div>
+          <div class="meta">${productsForCategory(c.id).length} ${productsForCategory(c.id).length === 1 ? 'product' : 'products'}</div></div>
+          ${it.categoryId === c.id ? `<span class="addbtn mark">${svg('check')}</span>` : ''}
+        </button>`).join('')}
+        <button class="row tappable" data-act="set-cat" data-id="${it.id}" data-cat="" style="width:100%">
+          <div class="body"><div class="name">Uncategorized</div><div class="meta">Grouped on its own in Category view</div></div>
+          ${!it.categoryId ? `<span class="addbtn mark">${svg('check')}</span>` : ''}
+        </button>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label for="newcat">Add a category</label>
+        <div style="display:flex;gap:9px">
+          <input class="inp" id="newcat" placeholder="Category name" autocomplete="off">
+          <button class="btn" data-act="add-cat-for" data-id="${it.id}" style="flex:0 0 auto">Add</button>
+        </div>
+        <div class="hint">${inCatalog
+          ? 'Saved to the product in your catalog, so it stays put next time you add it.'
+          : 'This product isn’t in your catalog any more, so the category applies to this trip only.'}</div>
+      </div>
+    </div>`);
+}
+
+/* ---- catalog picker for the list ---- */
+function pickMatches() {
+  const q = ui.pickQuery.trim().toLowerCase();
+  return S.products.filter(p => !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q));
+}
+function buildPick() {
+  return sheetHead('Add items', 'From your Master Catalog') + `
+    <div class="sheet-bd">
+      <input class="inp" id="pickq" type="search" placeholder="Search products" data-act="pick-search" autocomplete="off" value="${esc(ui.pickQuery)}" aria-label="Search products">
+      <div id="pickres" style="margin-top:12px">${pickResults(pickMatches())}</div>
+    </div>
+    <div class="sheet-ft"><button class="btn primary" data-act="close">Done</button></div>`;
+}
+function sheetPick() { showSheet(buildPick, {}, 'root'); }
+/* Group products by category in the catalog's own order, uncategorized last.
+   Shared by the Catalog screen and the "Add items" picker so the two always
+   organise products the same way. */
+function groupByCategory(items) {
+  const groups = new Map();
+  for (const p of items) {
+    const k = p.categoryId || '_none';
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(p);
+  }
+  const order = S.categories.map(c => c.id).concat(['_none']);
+  return [...groups.keys()]
+    .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+    .map(k => [k, k === '_none' ? 'Uncategorized' : catName(k), groups.get(k)]);
+}
+
+function pickResults(items) {
+  if (!S.products.length) return `<div class="empty">Your catalog is empty. Add products in the Catalog tab first.</div>`;
+  if (!items.length) return `<div class="empty">No products match.</div>`;
+  return groupByCategory(items).map(([key, label, arr]) => `
+    ${groupHead('pick', key, label, arr.length)}
+    ${isCollapsed('pick', key) ? '' : `<div class="card stack">${arr.map(p => {
+      const price = expectedPriceFor(p, p.preferredStoreId);
+      return `<div class="row" data-pid="${p.id}">
+        <div class="body"><div class="name">${esc(p.name)}</div>
+        <div class="meta"><span class="mi num">${price == null ? 'no price' : money(price) + (p.unitType === 'weight' ? '/' + (p.weightUnit || 'lb') : '')}</span>${
+          p.preferredStoreId ? `<span class="mi">${esc(storeName(p.preferredStoreId))}</span>` : ''}</div></div>
+        ${listToggleBtn(p)}
+      </div>`;
+    }).join('')}</div>`}`).join('');
+}
+
+/* ---- product details / edit ---- */
+function sheetProduct(productId) {
+  const isNew = !productId;
+  const p = isNew ? blankProduct() : productById(productId);
+  if (!p) return;
+  const d = JSON.parse(JSON.stringify(p));
+  /* Builds from the live draft every time, so the form comes back exactly as
+     you left it after another sheet (like the duplicate warning) closes on top. */
+  const build = () => {
+    const weighted = d.unitType === 'weight';
+
+    const priceBlock = `
+      <div class="pair">
+        <div class="field">
+          <label for="f-price">Usual price</label>
+          <div class="pre"><span class="sym">${esc(currencySymbol())}</span><input id="f-price" type="text" inputmode="decimal" placeholder="0.00"
+            value="${d.usualPrice != null ? esc(Number(d.usualPrice).toFixed(2)) : ''}">
+            <span class="suf" id="f-price-suf">${weighted ? '/ ' + esc(d.weightUnit || 'lb') : 'each'}</span></div>
+        </div>
+        <div class="field" id="f-qty-wrap">
+          <label for="f-qty">${weighted ? 'Typical weight' : 'Default quantity'}</label>
+          <div class="pre"><input id="f-qty" type="text" inputmode="decimal"
+            value="${esc(weighted ? numfmt(d.defaultWeight || 1) : numfmt(d.defaultQty || 1))}">
+            <span class="suf">${weighted ? esc(d.weightUnit || 'lb') : 'default'}</span></div>
+        </div>
+      </div>`;
+
+    const hist = (d.priceHistory || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const prices = hist.map(h => h.price).filter(v => v != null);
+    const byStore = new Map();
+    for (const h of hist) {
+      const k = h.storeId || '_un';
+      if (!byStore.has(k)) byStore.set(k, []);
+      byStore.get(k).push(h);
+    }
+    return sheetHead(isNew ? 'New product' : d.name, isNew ? 'Added to your Master Catalog' : catName(d.categoryId),
+      `<button class="favbtn inhead" data-act="draft-fav" aria-pressed="${!!d.favourite}"
+         aria-label="${d.favourite ? 'Favourite — tap to remove' : 'Mark as favourite'}">${svg('star')}</button>`) + `
+      <div class="sheet-bd">
+        <div class="field">
+          <label for="f-name">Item name</label>
+          <input class="inp" id="f-name" value="${esc(d.name)}" placeholder="e.g. Whole Milk 2L" ${isNew ? 'data-autofocus' : ''} autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-cat">Category</label>
+          <select class="inp" id="f-cat">
+            ${choicesWithCurrent(S.categories, d.categoryId).map(c => `<option value="${c.id}" ${d.categoryId === c.id ? 'selected' : ''}>${esc(c.name)}${isArchived(c) ? ' (archived)' : ''}</option>`).join('')}
+            <option value="" ${!d.categoryId ? 'selected' : ''}>Uncategorized</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="flabel">Priced by</span>
+          <div class="seg" role="group" aria-label="Priced by">
+            <button type="button" data-act="ptype" data-v="unit" aria-pressed="${!weighted}">Unit</button>
+            <button type="button" data-act="ptype" data-v="weight" aria-pressed="${weighted}">Weight</button>
+          </div>
+        </div>
+        <div id="f-wtunit" ${weighted ? '' : 'hidden'}>
+          <div class="field">
+            <span class="flabel">Weight unit</span>
+            <div class="seg" role="group" aria-label="Weight unit">
+              <button type="button" data-act="wunit" data-v="lb" aria-pressed="${(d.weightUnit || 'lb') === 'lb'}">lb</button>
+              <button type="button" data-act="wunit" data-v="kg" aria-pressed="${d.weightUnit === 'kg'}">kg</button>
+            </div>
+          </div>
+        </div>
+        <div id="f-priceblock">${priceBlock}</div>
+
+        <div class="field">
+          <span class="flabel">Stock status</span>
+          <div class="seg three" role="group" aria-label="Stock status">
+            <button type="button" data-act="stock" data-v="in" aria-pressed="${d.stock === 'in'}">In Stock</button>
+            <button type="button" data-act="stock" data-v="low" aria-pressed="${d.stock === 'low'}">Running Low</button>
+            <button type="button" data-act="stock" data-v="need" aria-pressed="${d.stock === 'need'}">Need to Buy</button>
+          </div>
+        </div>
+
+        <details class="disclose">
+          <summary>${svg('car', 'car')}${svg('filter', 'lead')}More details</summary>
+          <div class="inner" style="padding:14px">
+            <div class="field">
+              <label for="f-pkg">Package size</label>
+              <input class="inp" id="f-pkg" value="${esc(d.packageSize)}" placeholder="e.g. 2 L carton" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="f-store">Preferred store</label>
+              <select class="inp" id="f-store">
+                <option value="">No preference</option>
+                ${choicesWithCurrent(S.stores, d.preferredStoreId).map(s => `<option value="${s.id}" ${d.preferredStoreId === s.id ? 'selected' : ''}>${esc(s.name)}${isArchived(s) ? ' (archived)' : ''}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-shelf">Expiration / shelf life</label>
+              <input class="inp" id="f-shelf" value="${esc(d.shelfLife)}" placeholder="e.g. 7 days opened" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="f-freq">Purchase frequency</label>
+              <select class="inp" id="f-freq">
+                ${['', 'weekly', 'biweekly', 'monthly', 'custom'].map(v => `<option value="${v}" ${d.frequency === v ? 'selected' : ''}>${v === '' ? 'Not set' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}
+              </select>
+              <div class="hint">Informational only — nothing is added to a list automatically.</div>
+            </div>
+            <div class="field" id="f-customfreq" ${d.frequency === 'custom' ? '' : 'hidden'}>
+              <label for="f-customfreq-in">Custom frequency</label>
+              <input class="inp" id="f-customfreq-in" value="${esc(d.customFrequency)}" placeholder="e.g. every 6 weeks" autocomplete="off">
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label for="f-notes">Notes</label>
+              <textarea class="inp" id="f-notes" placeholder="Brand, aisle, substitutions…">${esc(d.notes)}</textarea>
+            </div>
+          </div>
+        </details>
+
+        ${isNew ? '' : `
+        <details class="disclose">
+          <summary>${svg('car', 'car')}${svg('clock', 'lead')}Purchase history<span class="n">${d.lastPurchased ? relDate(d.lastPurchased) : 'none'}</span></summary>
+          <div class="inner" style="padding:6px 14px 14px">
+            <div class="kv"><span class="k">Last purchased</span><span class="v">${d.lastPurchased ? esc(fmtDate(d.lastPurchased)) : '—'}</span></div>
+            <div class="kv"><span class="k">Typical quantity</span><span class="v">${d.typicalQty != null ? esc(numfmt(d.typicalQty)) + (d.unitType === 'weight' ? ' ' + esc(d.weightUnit || 'lb') : '') : '—'}</span></div>
+            <div class="kv"><span class="k">Last bought at</span><span class="v">${d.lastStoreId ? esc(storeName(d.lastStoreId)) : '—'}</span></div>
+            <div class="kv"><span class="k">Frequency</span><span class="v">${esc(d.frequency === 'custom' ? (d.customFrequency || 'custom') : (d.frequency || '—'))}</span></div>
+          </div>
+        </details>
+
+        <details class="disclose">
+          <summary>${svg('car', 'car')}${svg('chart', 'lead')}Price history<span class="n">${hist.length} ${hist.length === 1 ? 'entry' : 'entries'}</span></summary>
+          <div class="inner" style="padding:14px">
+            ${!hist.length ? `<div class="empty">No prices recorded yet. Enter shelf prices while shopping and they land here when you finish the trip.</div>` : `
+              <div class="kv"><span class="k">Lowest recorded</span><span class="v">${money(Math.min(...prices))}</span></div>
+              <div class="kv" style="margin-bottom:14px"><span class="k">Highest recorded</span><span class="v">${money(Math.max(...prices))}</span></div>
+              ${[...byStore.entries()].map(([k, arr]) => `
+                <div class="ph-store">
+                  <div class="hd"><b>${esc(k === '_un' ? 'No store recorded' : storeName(k))}</b><span class="rule"></span></div>
+                  ${arr.slice(0, 6).map((h, i) => `<div class="kv">
+                    <span class="k">${i === 0 ? 'Last price' : (i === 1 ? 'Previous' : esc(fmtDate(h.date)))}</span>
+                    <span class="v">${money(h.price)}${i < 2 ? ' <span style="color:var(--ink-3);font-size:11.5px">' + esc(fmtDate(h.date)) + '</span>' : ''}</span>
+                  </div>`).join('')}
+                </div>`).join('')}
+            `}
+          </div>
+        </details>
+
+        <div style="margin-top:18px"><button class="btn danger block" data-act="delete-product" data-id="${d.id}">${svg('trash')}Delete product</button></div>
+        `}
+      </div>
+      <div class="sheet-ft">
+        <button class="btn" data-act="close">Cancel</button>
+        <button class="btn primary" data-act="save-product">${isNew ? 'Add to catalog' : 'Save changes'}</button>
+      </div>`;
+  };
+  /* layer over a store/category drill-down; otherwise open on its own */
+  showSheet(build, { draft: d, isNew }, sheetIsOpen() ? 'push' : 'root');
+}
+
+/* ---- trip detail ---- */
+function sheetTrip(tripId) {
+  if (!S.trips.some(x => x.id === tripId)) return;
+  const sel = new Set();
+  showSheet(() => buildTrip(tripId, sel), { tripSel: sel, tripId }, 'root');
+}
+/* Rebuilt from state every time, so selections, the name and the button
+   states survive a confirmation sheet opening and closing on top. */
+function buildTrip(tripId, sel) {
+  const t = S.trips.find(x => x.id === tripId);
+  if (!t) return sheetHead('Trip removed') + `<div class="sheet-bd"><div class="empty">This trip is no longer in your history.</div></div>`;
+  const bought = (t.items || []).filter(i => i.checked);
+  const missed = (t.items || []).filter(i => !i.checked);
+
+  const rows = arr => arr.map(i => {
+    const amt = i.unitType === 'weight' ? numfmt(i.weight || 0) + ' ' + (i.weightUnit || 'lb') : '×' + numfmt(i.qty || 1);
+    const up = effectiveUnitPrice(i);
+    const tot = itemTotal(i);
+    const on = sel.has(i.id);
+    return `<div class="selrow">
+      <button class="cb" role="checkbox" aria-checked="${on}" data-act="tsel" data-id="${i.id}" aria-label="Select ${esc(i.name)}"><span class="box">${svg('check')}</span></button>
+      <div class="body" style="flex:1;min-width:0">
+        <div class="name">${esc(i.name)}</div>
+        <div class="meta"><span class="mi num">${esc(amt)}</span>
+          ${up != null ? `<span class="mi num">${money(up)}${i.unitType === 'weight' ? '/' + esc(i.weightUnit || 'lb') : ' ea'}</span>` : ''}
+          ${i.storeId ? `<span class="mi">${esc(storeName(i.storeId))}</span>` : ''}
+        </div>
+      </div>
+      <div class="price">${tot == null ? '—' : money(tot)}</div>
+    </div>`;
+  }).join('');
+
+  const sub = (t.name ? fmtDate(t.date, true) + ' · ' : '') + bought.length + ' of ' + (t.items || []).length + ' bought';
+  return sheetHead(t.name || fmtDate(t.date, true), sub) + `
+    <div class="sheet-bd" id="tripbody">
+      <div class="field">
+        <label for="trip-name">Trip name</label>
+        <div style="display:flex;gap:9px">
+          <input class="inp" id="trip-name" value="${esc(t.name || '')}" placeholder="${esc(fmtDate(t.date))}" autocomplete="off"
+                 aria-label="Trip name">
+          <button class="btn" data-act="rename-trip" data-id="${t.id}" style="flex:0 0 auto">Save</button>
+        </div>
+        <div class="hint">Optional — e.g. “Thanksgiving shop”. Leave blank to show the date.</div>
+      </div>
+      <div class="card" style="padding:13px 14px">
+        <div class="kv"><span class="k">Subtotal</span><span class="v">${money(t.totals ? t.totals.subtotal : null)}</span></div>
+        <div class="kv"><span class="k">Sales tax (${numfmt(t.taxRate != null ? t.taxRate : S.settings.taxRate)}%)</span><span class="v">${money(t.totals ? t.totals.tax : null)}</span></div>
+        <div class="kv"><span class="k" style="color:var(--ink);font-weight:500">Trip total</span><span class="v" style="font-size:16px;font-weight:600">${money(t.totals ? t.totals.total : null)}</span></div>
+      </div>
+      ${bought.length ? `<div class="sec"><div class="sec-head"><h2>Purchased</h2><span class="count num">${bought.length}</span></div>
+        <div class="card stack">${rows(bought)}</div></div>` : ''}
+      ${missed.length ? `<div class="sec"><div class="sec-head"><h2>Not purchased</h2><span class="count num">${missed.length}</span></div>
+        <div class="card stack">${rows(missed)}</div></div>` : ''}
+      <div class="sec-note" style="margin-top:14px">Select items to add just those, or repeat the whole trip. Either way the new list stays fully editable.</div>
+      <div style="margin-top:22px">
+        <button class="btn danger block" data-act="ask-delete-trip" data-id="${t.id}">${svg('trash')}Delete this trip</button>
+      </div>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="add-selected" data-id="${t.id}" id="addsel"${sel.size ? '' : ' disabled'}>${sel.size ? `Add Selected Again (${sel.size})` : 'Add Selected Again'}</button>
+      <button class="btn primary" data-act="repeat" data-id="${t.id}">Repeat This Trip</button>
+    </div>`;
+}
+
+/* A proper confirmation that spells out what will and won't change. */
+function buildDeleteTrip(tripId) {
+  const plan = tripDeletionPlan(tripId);
+  if (!plan) return sheetHead('Trip removed') + `<div class="sheet-bd"><div class="empty">This trip is already gone.</div></div>`;
+  const t = plan.trip, n = (t.items || []).length;
+  const isLatest = S.trips[0] && S.trips[0].id === t.id;
+  const withDrops = plan.products.filter(x => x.drop).length;
+  return sheetHead('Delete this trip?', tripTitle(t)) + `
+    <div class="sheet-bd">
+      <div class="card" style="padding:4px 14px">
+        <div class="kv"><span class="k">Trip</span><span class="v" style="font-family:var(--sans)">${esc(tripTitle(t))}${t.name ? ' · ' + esc(fmtDate(t.date)) : ''}</span></div>
+        <div class="kv"><span class="k">Items on it</span><span class="v">${n}</span></div>
+        <div class="kv"><span class="k">Trip total</span><span class="v">${money(t.totals ? t.totals.total : null)}</span></div>
+      </div>
+      <div class="sec" style="margin-top:16px">
+        <div class="sec-head"><h2>What gets removed</h2></div>
+        <ul class="impact">
+          <li><b>The trip</b> from your history.</li>
+          <li><b>${plan.priceRecords} price ${plan.priceRecords === 1 ? 'record' : 'records'}</b> this trip added${plan.priceRecords ? ` across ${withDrops} ${withDrops === 1 ? 'product' : 'products'}` : ''}.</li>
+          ${plan.purchaseReverted ? `<li><b>Last-purchased details</b> for ${plan.purchaseReverted} ${plan.purchaseReverted === 1 ? 'product' : 'products'} fall back to your previous trip that included them.</li>` : ''}
+          ${isLatest ? `<li><b>Still Needed</b> on Home will switch to your previous trip’s leftovers.</li>` : ''}
+        </ul>
+      </div>
+      <div class="sec" style="margin-top:6px">
+        <div class="sec-head"><h2>What stays</h2></div>
+        <ul class="impact keep">
+          <li><b>Every product</b> stays in your Master Catalog${plan.stillInCatalog ? ` — including the ${plan.stillInCatalog} on this trip` : ''}.</li>
+          <li>Usual prices, stock status and favourites are left as they are.</li>
+          <li>Other trips and their price records are untouched.</li>
+        </ul>
+      </div>
+      <div class="hint" style="margin-top:8px">This can’t be undone.</div>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="close">Keep trip</button>
+      <button class="btn dangerfill" data-act="confirm-delete-trip" data-id="${t.id}">Delete trip</button>
+    </div>`;
+}
+
+/* ---- finish trip ---- */
+function sheetFinish() {
+  const t = computeTotals(S.active);
+  openSheet(sheetHead('Finish this trip?', fmtDate(todayISO())) + `
+    <div class="sheet-bd">
+      <div class="card" style="padding:13px 14px">
+        <div class="kv"><span class="k">Purchased</span><span class="v">${t.checked} ${t.checked === 1 ? 'item' : 'items'} · ${money(t.purchased)}</span></div>
+        <div class="kv"><span class="k">Left unbought</span><span class="v">${t.open} ${t.open === 1 ? 'item' : 'items'}</span></div>
+        <div class="kv"><span class="k">Sales tax (${numfmt(S.settings.taxRate)}%)</span><span class="v">${money(t.tax)}</span></div>
+        <div class="kv"><span class="k" style="color:var(--ink);font-weight:500">Trip total</span><span class="v" style="font-size:16px;font-weight:600">${money(t.purchased + t.tax)}</span></div>
+      </div>
+      <div class="sec-note" style="margin-top:14px">
+        Prices you entered are saved to each product’s price history. ${t.open ? 'The ' + t.open + ' unbought ' + (t.open === 1 ? 'item moves' : 'items move') + ' to Still Needed on Home — nothing is added to your next list automatically.' : ''}
+      </div>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="close">Keep shopping</button>
+      <button class="btn primary" data-act="finish-confirm">Finish Trip</button>
+    </div>`);
+}
+
+function sheetUpdatePrices(changes) {
+  openSheet(sheetHead('Update usual prices?', 'Shelf prices differed from your catalog') + `
+    <div class="sheet-bd">
+      <div class="card stack">
+        ${changes.map(c => `<div class="selrow">
+          <button class="cb" role="checkbox" aria-checked="true" data-act="psel" data-id="${c.productId}" aria-label="Update ${esc(c.name)}"><span class="box">${svg('check')}</span></button>
+          <div class="body" style="flex:1;min-width:0">
+            <div class="name">${esc(c.name)}</div>
+            <div class="meta"><span class="num">was ${c.old == null ? 'unset' : money(c.old)}</span>${svg('car', 'car')}<span class="num" style="color:var(--accent);font-weight:600">${money(c.next)}</span></div>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="sec-note" style="margin-top:14px">Store-specific prices are already saved in each product’s price history either way.</div>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="close">Keep old prices</button>
+      <button class="btn primary" data-act="apply-prices">Update selected</button>
+    </div>`, { priceChanges: changes, priceSel: new Set(changes.map(c => c.productId)) });
+}
+
+/* ---- archive / restore / rename for stores and categories ---- */
+function archiveRecord(kind, id, on) {
+  const list = kind === 'store' ? S.stores : S.categories;
+  const rec = list.find(x => x.id === id);
+  if (!rec) return null;
+  if (on) rec.archived = true; else delete rec.archived;
+  Persist.saveMeta(kind === 'store' ? 'stores' : 'categories');
+  if (on) { (kind === 'cat' ? ui.filters.cats : ui.filters.stores).delete(id); }
+  return rec;
+}
+/* Permanent removal — the only path that actually loses the name. */
+function purgeRecord(kind, id) {
+  const rec = (kind === 'store' ? S.stores : S.categories).find(x => x.id === id);
+  if (!rec) return null;
+  if (kind === 'store') {
+    S.stores = S.stores.filter(x => x.id !== id);
+    Persist.saveMeta('stores');
+    ui.filters.stores.delete(id);
+    S.products.forEach(p => { if (p.preferredStoreId === id) { p.preferredStoreId = null; Persist.saveProduct(p); } });
+    if (S.active) { S.active.items.forEach(i => { if (i.storeId === id) i.storeId = null; }); Persist.saveActive(); }
+  } else {
+    S.categories = S.categories.filter(x => x.id !== id);
+    Persist.saveMeta('categories');
+    S.products.forEach(p => { if (p.categoryId === id) { p.categoryId = null; Persist.saveProduct(p); } });
+    if (S.active) { S.active.items.forEach(i => { if (i.categoryId === id) i.categoryId = null; }); Persist.saveActive(); }
+    ui.filters.cats.delete(id);
+  }
+  return rec;
+}
+function renameRecord(kind, id, name) {
+  const rec = (kind === 'store' ? S.stores : S.categories).find(x => x.id === id);
+  if (!rec) return null;
+  const clean = String(name || '').trim();
+  if (!clean) { toast('Give it a name'); return null; }
+  if (clean === rec.name) return rec;
+  rec.name = clean;
+  Persist.saveMeta(kind === 'store' ? 'stores' : 'categories');
+  /* list items keep a snapshot of nothing but the product name, so nothing
+     else needs rewriting — everything resolves through the id */
+  return rec;
+}
+
+/* Hold on to a tax rate typed but not yet saved, so drilling into a store
+   or category and coming back doesn't lose it. */
+function commitTaxField() {
+  const f = document.getElementById('f-tax');
+  if (!f) return;
+  const v = parseNum(f.value);
+  if (v != null && v >= 0) { S.settings.taxRate = v; Persist.saveMeta('settings'); }
+}
+
+/* Two-tap guard for deletes that can't be undone. Returns true on the
+   confirming tap, false on the first one. */
+function armDelete(el, label, warning) {
+  if (el.dataset.confirm === '1') return true;
+  el.dataset.confirm = '1';
+  el.classList.add('confirm');
+  el.setAttribute('aria-label', 'Tap again to confirm: ' + label);
+  toast(warning);
+  setTimeout(() => {
+    if (!el.isConnected) return;
+    el.dataset.confirm = '';
+    el.classList.remove('confirm');
+    el.setAttribute('aria-label', label);
+  }, 4000);
+  return false;
+}
+
+/* ---- store / category drill-down ---- */
+const productsForStore = storeId =>
+  S.products.filter(p => p.preferredStoreId === storeId).sort((a, b) => a.name.localeCompare(b.name));
+const productsForCategory = categoryId =>
+  S.products.filter(p => p.categoryId === categoryId).sort((a, b) => a.name.localeCompare(b.name));
+
+/* One row per product, used by both drill-downs. `priceStoreId` shows the
+   price recorded at that store rather than the general usual price. */
+function scopedProductRow(p, priceStoreId) {
+  const atStore = priceStoreId ? latestStorePrice(p, priceStoreId) : null;
+  const price = atStore != null ? atStore : (p.usualPrice != null ? p.usualPrice : null);
+  const unit = p.unitType === 'weight' ? '/' + (p.weightUnit || 'lb') : '';
+  return `<div class="row tappable" data-pid="${p.id}">
+    <button class="body" data-act="open-product" data-id="${p.id}" style="min-height:46px">
+      <div class="name">${esc(p.name)}</div>
+      <div class="meta">
+        <span class="mi num">${price == null ? 'No price yet' : money(price) + unit}</span>
+        <span class="mi">${esc(priceStoreId ? (atStore != null ? 'last paid here' : 'usual price') : catName(p.categoryId))}</span>
+        ${p.stock === 'low' ? '<span class="pill low">Low</span>' : ''}
+        ${p.stock === 'need' ? '<span class="pill need">Need</span>' : ''}
+      </div>
+    </button>
+    ${listToggleBtn(p)}
+  </div>`;
+}
+
+const drillFoot = `<div class="sheet-ft"><button class="btn primary" data-act="close">Back to settings</button></div>`;
+
+/* Rename lives on the detail sheet, where you can see what it affects. */
+function renameField(kind, rec) {
+  return `<div class="field">
+      <label for="rename">${kind === 'store' ? 'Store name' : 'Category name'}</label>
+      <div style="display:flex;gap:9px">
+        <input class="inp" id="rename" value="${esc(rec.name)}" autocomplete="off"
+               aria-label="Rename ${esc(rec.name)}">
+        <button class="btn" data-act="rename-${kind}" data-id="${rec.id}" style="flex:0 0 auto">Save</button>
+      </div>
+      <div class="hint">Renaming keeps every product, price and past trip attached to it.${
+        isArchived(rec) ? ' This one is archived — restore it in Settings to use it again.' : ''}</div>
+    </div>`;
+}
+
+function buildStoreDetail(storeId) {
+  const s = storeById(storeId);
+  if (!s) return sheetHead('Store removed') + `<div class="sheet-bd"><div class="empty">This store is no longer saved.</div></div>` + drillFoot;
+  const items = productsForStore(storeId);
+  return sheetHead(s.name, items.length + (items.length === 1 ? ' preferred product' : ' preferred products')) + `
+    <div class="sheet-bd">
+      ${renameField('store', s)}
+      ${items.length
+        ? `<div class="sec-note" style="margin:0 0 11px">What you normally buy here. Tap a product to edit it, or add it straight to your list.</div>
+           <div class="card stack">${items.map(p => scopedProductRow(p, storeId)).join('')}</div>`
+        : `<div class="empty roomy">
+             <strong>Nothing assigned yet</strong>
+             Set a product's preferred store in its details and it will show up here.
+           </div>`}
+    </div>` + drillFoot;
+}
+function sheetStoreDetail(storeId, mode) {
+  if (!storeById(storeId)) { toast('That store is no longer saved'); sheetSettings(); return; }
+  ui.drill = { kind: 'store', id: storeId };
+  showSheet(() => buildStoreDetail(storeId), { kind: 'store', id: storeId }, mode || 'push');
+}
+
+function buildCategoryDetail(categoryId) {
+  const c = catById(categoryId);
+  if (!c) return sheetHead('Category removed') + `<div class="sheet-bd"><div class="empty">This category is no longer saved.</div></div>` + drillFoot;
+  const items = productsForCategory(categoryId);
+  return sheetHead(c.name, items.length + (items.length === 1 ? ' product' : ' products')) + `
+    <div class="sheet-bd">
+      ${renameField('cat', c)}
+      ${items.length
+        ? `<div class="sec-note" style="margin:0 0 11px">Everything in this category. Tap a product to edit it, or add it straight to your list.</div>
+           <div class="card stack">${items.map(p => scopedProductRow(p, null)).join('')}</div>`
+        : `<div class="empty roomy">
+             <strong>No products in ${esc(c.name)}</strong>
+             Assign a product to this category from its details screen.
+           </div>`}
+    </div>` + drillFoot;
+}
+function sheetCategoryDetail(categoryId, mode) {
+  if (!catById(categoryId)) { toast('That category is no longer saved'); sheetSettings(); return; }
+  ui.drill = { kind: 'cat', id: categoryId };
+  showSheet(() => buildCategoryDetail(categoryId), { kind: 'cat', id: categoryId }, mode || 'push');
+}
+
+/* ---- settings ---- */
+function settingsRow(kind, rec) {
+  const n = kind === 'store' ? productsForStore(rec.id).length : productsForCategory(rec.id).length;
+  const label = kind === 'store'
+    ? `${n} preferred ${n === 1 ? 'product' : 'products'}`
+    : `${n} ${n === 1 ? 'product' : 'products'}`;
+  return `<div class="row tappable">
+    <button class="body" data-act="open-${kind === 'store' ? 'store' : 'cat'}" data-id="${rec.id}" style="min-height:46px">
+      <div class="name">${esc(rec.name)}</div>
+      <div class="meta">${label}</div>
+    </button>
+    <span class="iconbtn" style="width:24px;flex:0 0 24px;height:24px;color:var(--ink-3)">${svg('car')}</span>
+    <button class="rm settings-rm" data-act="archive-${kind}" data-id="${rec.id}"
+      aria-label="Archive ${esc(rec.name)}" title="Archive">${svg('box')}</button>
+  </div>`;
+}
+
+function archivedSection() {
+  const as = archivedStores(), ac = archivedCategories();
+  const total = as.length + ac.length;
+  if (!total) return '';
+  const row = (kind, rec) => {
+    const n = kind === 'store' ? productsForStore(rec.id).length : productsForCategory(rec.id).length;
+    return `<div class="row">
+      <div class="body">
+        <div class="name">${esc(rec.name)}</div>
+        <div class="meta">${kind === 'store' ? 'Store' : 'Category'}${n ? ` · still on ${n} ${n === 1 ? 'product' : 'products'}` : ''}</div>
+      </div>
+      <button class="btn sm" data-act="restore-${kind}" data-id="${rec.id}">${svg('undo')}Restore</button>
+      <button class="rm settings-rm" data-act="purge-${kind}" data-id="${rec.id}"
+        aria-label="Delete ${esc(rec.name)} permanently" title="Delete permanently">${svg('trash')}</button>
+    </div>`;
+  };
+  return `<details class="disclose" style="margin-top:20px">
+    <summary>${svg('car', 'car')}${svg('box', 'lead')}Archived<span class="n">${total}</span></summary>
+    <div class="inner" style="padding:12px">
+      <div class="sec-note" style="margin:0 0 10px">Hidden from pickers, but every price and past trip still shows their name. Restore one any time.</div>
+      <div class="card stack">
+        ${as.map(s => row('store', s)).join('')}
+        ${ac.map(c => row('cat', c)).join('')}
+      </div>
+    </div>
+  </details>`;
+}
+
+function sheetSettings() {
+  ui.drill = null;
+  showSheet(buildSettings, {}, 'root');
+}
+function buildSettings() {
+  const cur = currencyCode(), wu = defaultWeightUnit();
+  return sheetHead('Settings') + `
+    <div class="sheet-bd">
+      <div class="field">
+        <label for="f-currency">Currency</label>
+        <select class="inp" id="f-currency" data-act="set-currency">
+          ${CURRENCIES.map(([code, name]) => `<option value="${code}"${code === cur ? ' selected' : ''}>${esc(name)} (${esc(currencySymbol(code))}) · ${code}</option>`).join('')}
+        </select>
+        <div class="hint">Changes how prices are shown. Nothing is converted.</div>
+      </div>
+
+      <div class="field">
+        <span class="flabel">Default weight unit</span>
+        <div class="seg" role="group" aria-label="Default weight unit">
+          ${WEIGHT_UNITS.map(u => `<button type="button" data-act="set-wunit-default" data-v="${u}" aria-pressed="${u === wu}">${u}</button>`).join('')}
+        </div>
+        <div class="hint">Used for new products priced by weight. Products you’ve already saved keep their own unit.</div>
+      </div>
+
+      <div class="field">
+        <label for="f-tax">Default tax rate</label>
+        <div class="pre"><input id="f-tax" type="text" inputmode="decimal" value="${esc(numfmt(S.settings.taxRate))}"><span class="suf">%</span></div>
+        <div class="hint">Applied to the whole subtotal of your current list. Past trips keep the rate they were saved with.</div>
+      </div>
+
+      <div class="sec" style="margin-top:20px">
+        <div class="sec-head"><h2>Stores</h2><span class="count num">${activeStores().length}</span></div>
+        ${activeStores().length
+          ? `<div class="card stack">${activeStores().map(s => settingsRow('store', s)).join('')}</div>`
+          : `<div class="empty">No saved stores yet.</div>`}
+        <div style="display:flex;gap:9px;margin-top:11px">
+          <input class="inp" id="s-newstore" placeholder="Add a store" autocomplete="off">
+          <button class="btn" data-act="add-store" style="flex:0 0 auto">Add</button>
+        </div>
+      </div>
+
+      <div class="sec" style="margin-top:20px">
+        <div class="sec-head"><h2>Categories</h2><span class="count num">${activeCategories().length}</span></div>
+        ${activeCategories().length
+          ? `<div class="card stack">${activeCategories().map(c => settingsRow('cat', c)).join('')}</div>`
+          : `<div class="empty">No categories yet.</div>`}
+        <div style="display:flex;gap:9px;margin-top:11px">
+          <input class="inp" id="s-newcat" placeholder="Add a category" autocomplete="off">
+          <button class="btn" data-act="add-cat" style="flex:0 0 auto">Add</button>
+        </div>
+      </div>
+
+      ${archivedSection()}
+
+      ${backupSection()}
+
+      <div class="sec-note" style="margin-top:20px">
+        ${backend === 'db' ? 'Saved to this artifact’s database — your catalog, lists and history follow you across devices.'
+          : 'Saving to this browser’s local storage on this device.'}
+      </div>
+    </div>
+    <div class="sheet-ft"><button class="btn primary" data-act="save-settings">Done</button></div>`;
+}
+
+/* ============================================================
+   BACKUP & RESTORE
+   A backup is one JSON file holding everything the app keeps: the catalog
+   (with stock status, favourites and price history), stores and categories
+   including archived ones, settings, the current list and every trip.
+   Restore replaces everything with the file's contents, only after a
+   preview and confirmation, and keeps a safety copy first so it can be
+   undone.
+   ============================================================ */
+const BACKUP_APP = 'pantry-run';
+const BACKUP_VERSION = 1;
+const SAFETY_LS_KEY = 'pantryrun.safety';
+const SAFETY_CHUNK = 50000;            /* characters per db part — well under the 256 KiB doc cap */
+let safetyHead = null;                 /* {createdAt, parts, counts, backupDate} or null */
+let pendingRestore = null;             /* {data, meta, source:'file'|'undo'} */
+
+function currentData() {
+  return clone({
+    products: S.products, stores: S.stores, categories: S.categories,
+    settings: S.settings, active: S.active, trips: S.trips
+  });
+}
+function dataCounts(d) {
+  const listItems = d.active && Array.isArray(d.active.items) ? d.active.items.length : 0;
+  return {
+    products: d.products.length,
+    low: d.products.filter(p => p.stock === 'low').length,
+    need: d.products.filter(p => p.stock === 'need').length,
+    favourites: d.products.filter(p => p.favourite).length,
+    priceRecords: d.products.reduce((n, p) => n + (Array.isArray(p.priceHistory) ? p.priceHistory.length : 0), 0),
+    stores: d.stores.filter(s => !s.archived).length,
+    storesArchived: d.stores.filter(s => s.archived).length,
+    categories: d.categories.filter(c => !c.archived).length,
+    categoriesArchived: d.categories.filter(c => c.archived).length,
+    trips: d.trips.length,
+    listItems,
+    taxRate: d.settings && d.settings.taxRate != null ? d.settings.taxRate : 13,
+    currency: d.settings && CURRENCIES.some(x => x[0] === d.settings.currency) ? d.settings.currency : DEFAULT_CURRENCY,
+    weightUnit: d.settings && WEIGHT_UNITS.includes(d.settings.weightUnit) ? d.settings.weightUnit : 'lb'
+  };
+}
+function makeBackup() {
+  const data = currentData();
+  if (data.settings) delete data.settings.lastBackupAt;
+  return { app: BACKUP_APP, kind: 'backup', version: BACKUP_VERSION,
+    createdAt: new Date().toISOString(), counts: dataCounts(data), data };
+}
+function backupFilename(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `pantry-run-backup-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
+}
+function markBackedUp() {
+  S.settings.lastBackupAt = new Date().toISOString();
+  Persist.saveMeta('settings');
+}
+function lastBackupLine() {
+  const at = S.settings.lastBackupAt;
+  if (!at) return 'No backup yet';
+  const days = Math.floor((Date.now() - new Date(at).getTime()) / 86400000);
+  return 'Last backup ' + (days <= 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago');
+}
+
+/* ---------- validation ----------
+   Anything that isn't clearly a Pantry Run backup is refused before the app
+   touches a thing. Returns {ok:true, data, meta} or {ok:false, error}. */
+const idOk = id => typeof id === 'string' && id.length > 0 && id.length <= 150 && !/[\/\s]/.test(id) && id !== '.' && id !== '..';
+const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
+function parseBackup(text) {
+  const bad = msg => ({ ok: false, error: msg });
+  const NOT = 'This isn’t a Pantry Run backup file.';
+  if (typeof text !== 'string' || !text.trim()) return bad('That file is empty.');
+  let obj;
+  try { obj = JSON.parse(text.replace(/^\uFEFF/, '')); } catch (e) { return bad(NOT + ' It couldn’t be read as a backup.'); }
+  if (!isObj(obj) || obj.app !== BACKUP_APP || !isObj(obj.data)) return bad(NOT);
+  if (typeof obj.version !== 'number' || obj.version < 1) return bad(NOT);
+  if (obj.version > BACKUP_VERSION) return bad('This backup was made by a newer version of Pantry Run and can’t be restored here.');
+  const d = obj.data;
+  const damaged = what => bad('This backup is damaged (' + what + '), so nothing was restored.');
+  for (const k of ['products', 'stores', 'categories', 'trips']) if (!Array.isArray(d[k])) return damaged(k + ' missing');
+  if (d.settings != null && !isObj(d.settings)) return damaged('settings');
+  if (d.active != null && !(isObj(d.active) && Array.isArray(d.active.items))) return damaged('shopping list');
+
+  const uniq = (arr, label) => {
+    const seen = new Set();
+    for (const x of arr) {
+      if (!isObj(x) || !idOk(x.id)) return label + ' without a valid id';
+      if (seen.has(x.id)) return 'repeated ' + label + ' id';
+      seen.add(x.id);
+    }
+    return null;
+  };
+  let e;
+  if ((e = uniq(d.products, 'product'))) return damaged(e);
+  if ((e = uniq(d.stores, 'store'))) return damaged(e);
+  if ((e = uniq(d.categories, 'category'))) return damaged(e);
+  if ((e = uniq(d.trips, 'trip'))) return damaged(e);
+  if (d.products.some(p => typeof p.name !== 'string' || !p.name.trim())) return damaged('product without a name');
+  if (d.stores.some(s => typeof s.name !== 'string')) return damaged('store without a name');
+  if (d.categories.some(c => typeof c.name !== 'string')) return damaged('category without a name');
+  if (d.trips.some(t => typeof t.date !== 'string' || !Array.isArray(t.items))) return damaged('trip without a date or items');
+
+  /* light normalisation so older or hand-edited files still behave */
+  const data = clone({
+    products: d.products, stores: d.stores, categories: d.categories, trips: d.trips,
+    settings: d.settings || {}, active: d.active || null
+  });
+  for (const p of data.products) {
+    if (!['in', 'low', 'need'].includes(p.stock)) p.stock = 'in';
+    p.favourite = !!p.favourite;
+    if (!Array.isArray(p.priceHistory)) p.priceHistory = [];
+  }
+  data.settings = Object.assign({ taxRate: 13 }, data.settings, { id: 'app' });
+  if (typeof data.settings.taxRate !== 'number' || !(data.settings.taxRate >= 0)) data.settings.taxRate = 13;
+  if (!CURRENCIES.some(x => x[0] === data.settings.currency)) delete data.settings.currency;
+  if (!WEIGHT_UNITS.includes(data.settings.weightUnit)) delete data.settings.weightUnit;
+  delete data.settings.lastBackupAt;
+  const created = typeof obj.createdAt === 'string' && !isNaN(new Date(obj.createdAt)) ? obj.createdAt : null;
+  return { ok: true, data, meta: { createdAt: created } };
+}
+
+/* ---------- safety copy (for Undo restore) ---------- */
+function writeQueued(path, fn) {
+  /* like enqueue, but the caller hears about failures */
+  const prev = queues.get(path) || Promise.resolve();
+  const run = prev.catch(() => {}).then(fn);
+  queues.set(path, run.catch(() => {}));
+  return run;
+}
+async function runLimited(tasks, n) {
+  let i = 0;
+  const worker = async () => { while (i < tasks.length) { const t = tasks[i++]; await t(); } };
+  await Promise.all(Array.from({ length: Math.min(n, tasks.length) }, worker));
+}
+async function saveSafety(data, backupDate) {
+  const head = { createdAt: new Date().toISOString(), counts: dataCounts(data), backupDate: backupDate || null };
+  const text = JSON.stringify(data);
+  if (backend === 'db') {
+    const parts = Math.max(1, Math.ceil(text.length / SAFETY_CHUNK));
+    const old = safetyHead ? safetyHead.parts || 0 : 0;
+    const tasks = [];
+    for (let i = 0; i < parts; i++) {
+      const s = text.slice(i * SAFETY_CHUNK, (i + 1) * SAFETY_CHUNK);
+      tasks.push(() => writeQueued('safety/p' + i, () => DB.doc('safety/p' + i).set({ i, s })));
+    }
+    await runLimited(tasks, 4);
+    head.parts = parts;
+    await writeQueued('safety/head', () => DB.doc('safety/head').set(head));
+    for (let i = parts; i < old; i++) writeQueued('safety/p' + i, () => DB.doc('safety/p' + i).delete()).catch(() => {});
+  } else {
+    localStorage.setItem(SAFETY_LS_KEY, JSON.stringify({ head, data }));   /* throws if storage is full */
+  }
+  safetyHead = head;
+}
+async function loadSafety() {
+  if (!safetyHead) return null;
+  if (backend === 'db') {
+    const snaps = await Promise.all(Array.from({ length: safetyHead.parts }, (_, i) => DB.doc('safety/p' + i).get()));
+    if (snaps.some(s => !s.exists)) return null;
+    return JSON.parse(snaps.map(s => s.data().s).join(''));
+  }
+  const raw = JSON.parse(localStorage.getItem(SAFETY_LS_KEY) || 'null');
+  return raw && raw.data ? raw.data : null;
+}
+async function clearSafety() {
+  const old = safetyHead;
+  safetyHead = null;
+  if (backend === 'db') {
+    await writeQueued('safety/head', () => DB.doc('safety/head').delete());
+    for (let i = 0; i < (old ? old.parts || 0 : 0); i++) writeQueued('safety/p' + i, () => DB.doc('safety/p' + i).delete()).catch(() => {});
+  } else {
+    try { localStorage.removeItem(SAFETY_LS_KEY); } catch (e) { /* ignore */ }
+  }
+}
+async function bootSafety() {
+  try {
+    if (backend === 'db') {
+      const h = await DB.doc('safety/head').get();
+      safetyHead = h.exists ? clone(h.data()) : null;
+    } else {
+      const raw = JSON.parse(localStorage.getItem(SAFETY_LS_KEY) || 'null');
+      safetyHead = raw && raw.head ? raw.head : null;
+    }
+  } catch (e) { safetyHead = null; }
+}
+
+/* ---------- replacing everything ---------- */
+async function replaceAllData(data) {
+  const keepLast = S.settings.lastBackupAt;
+  if (backend === 'db') {
+    /* Ask the database which documents really exist, rather than trusting
+       memory — so a retry after a failed restore still clears leftovers. */
+    const [prods, trips] = await Promise.all([
+      DB.collection('products').limit(1000).get(),
+      DB.collection('trips').limit(1000).get()
+    ]);
+    const keepP = new Set(data.products.map(p => p.id));
+    const keepT = new Set(data.trips.map(t => t.id));
+    const settings = Object.assign({}, data.settings, keepLast ? { lastBackupAt: keepLast } : {});
+    const tasks = [];
+    data.products.forEach(p => tasks.push(() => writeQueued('products/' + p.id, () => DB.doc('products/' + p.id).set(p))));
+    data.trips.forEach(t => tasks.push(() => writeQueued('trips/' + t.id, () => DB.doc('trips/' + t.id).set(t))));
+    tasks.push(() => writeQueued('meta/stores', () => DB.doc('meta/stores').set({ items: data.stores })));
+    tasks.push(() => writeQueued('meta/categories', () => DB.doc('meta/categories').set({ items: data.categories })));
+    tasks.push(() => writeQueued('meta/settings', () => DB.doc('meta/settings').set(settings)));
+    tasks.push(() => writeQueued('lists/active', () => data.active ? DB.doc('lists/active').set(data.active) : DB.doc('lists/active').delete()));
+    await runLimited(tasks, 6);
+    /* removals last, once everything from the backup is safely written */
+    const dels = [];
+    prods.docs.forEach(s => { if (!keepP.has(s.id)) dels.push(() => writeQueued('products/' + s.id, () => DB.doc('products/' + s.id).delete())); });
+    trips.docs.forEach(s => { if (!keepT.has(s.id)) dels.push(() => writeQueued('trips/' + s.id, () => DB.doc('trips/' + s.id).delete())); });
+    await runLimited(dels, 6);
+  }
+  S.products = clone(data.products); S.stores = clone(data.stores); S.categories = clone(data.categories);
+  S.settings = Object.assign({ taxRate: 13 }, clone(data.settings), { id: 'app' });
+  if (keepLast) S.settings.lastBackupAt = keepLast; else delete S.settings.lastBackupAt;
+  S.active = clone(data.active); S.trips = clone(data.trips);
+  S.products.sort((a, b) => a.name.localeCompare(b.name));
+  S.trips.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  if (backend !== 'db') {
+    localStorage.setItem(LS_KEY, JSON.stringify(snapshotLocal()));
+    if (JSON.parse(localStorage.getItem(LS_KEY)).products.length !== S.products.length) throw new Error('local save failed');
+  }
+  /* views may point at things that no longer exist */
+  ui.filters = { cats: new Set(), stores: new Set(), stock: new Set(), fav: false };
+  ui.catQuery = ''; ui.pickQuery = ''; ui.markQuery = ''; ui.drill = null;
+}
+
+/* ---------- sheets ---------- */
+function buildBackup() {
+  const c = dataCounts(currentData());
+  return sheetHead('Back up', 'Everything in Pantry Run, in one file') + `
+    <div class="sheet-bd">
+      <div class="card" style="padding:4px 14px">
+        <div class="kv"><span class="k">Products</span><span class="v">${c.products}</span></div>
+        <div class="kv"><span class="k">Stock status</span><span class="v">${c.low} low · ${c.need} need</span></div>
+        <div class="kv"><span class="k">Favourites</span><span class="v">${c.favourites}</span></div>
+        <div class="kv"><span class="k">Price records</span><span class="v">${c.priceRecords}</span></div>
+        <div class="kv"><span class="k">Stores</span><span class="v">${c.stores}${c.storesArchived ? ` + ${c.storesArchived} archived` : ''}</span></div>
+        <div class="kv"><span class="k">Categories</span><span class="v">${c.categories}${c.categoriesArchived ? ` + ${c.categoriesArchived} archived` : ''}</span></div>
+        <div class="kv"><span class="k">Trips</span><span class="v">${c.trips}</span></div>
+        <div class="kv"><span class="k">On the shopping list</span><span class="v">${c.listItems}</span></div>
+        <div class="kv"><span class="k">Settings</span><span class="v">${esc(c.currency)} · ${esc(c.weightUnit)} · tax ${esc(numfmt(c.taxRate))}%</span></div>
+      </div>
+      <div class="sec-note" style="margin-top:12px">Saves as a <b>.json</b> file. Keep it somewhere safe — iCloud Drive, Google Drive, or email it to yourself. ${esc(lastBackupLine())}.</div>
+      <div id="bk-text-wrap" hidden style="margin-top:14px">
+        <label for="bk-text" style="font-size:13px;color:var(--ink-3)">Backup text — select all and copy it somewhere safe</label>
+        <textarea class="inp num" id="bk-text" readonly style="min-height:120px;font-size:12px;margin-top:6px"></textarea>
+      </div>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="backup-copy">Copy text</button>
+      <button class="btn primary" data-act="backup-download">${svg('download')}Download</button>
+    </div>`;
+}
+function sheetBackup() { commitTaxField(); showSheet(buildBackup, { kind: 'backup' }, 'push'); }
+
+async function doBackupDownload(btn) {
+  const b = makeBackup();
+  const text = JSON.stringify(b, null, 1);
+  const name = backupFilename(b.createdAt);
+  let dl = null;
+  try { dl = await window.claude?.use?.('downloads'); } catch (e) { dl = null; }
+  if (dl) {
+    if (btn) btn.disabled = true;
+    try {
+      await dl.save({ filename: name, data: text });
+      markBackedUp(); renderSheets(); toast('Backup saved', 'ok');
+    } catch (err) {
+      const code = err && err.code;
+      if (code === 'declined') toast('Backup not saved');
+      else if (code === 'rate_limited') toast('A save prompt is already open');
+      else { showBackupText(text); toast('Downloads aren’t available here — copy the text instead'); }
+    } finally { if (btn && btn.isConnected) btn.disabled = false; }
+    return;
+  }
+  /* outside Claude: a plain browser download */
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    markBackedUp(); renderSheets(); toast('Backup saved', 'ok');
+  } catch (e) { showBackupText(text); }
+}
+function showBackupText(text) {
+  const wrap = document.querySelector('.scrim:last-child #bk-text-wrap');
+  const ta = document.querySelector('.scrim:last-child #bk-text');
+  if (!wrap || !ta) return;
+  wrap.hidden = false; ta.value = text;
+  ta.focus(); ta.select();
+}
+async function doBackupCopy() {
+  const text = JSON.stringify(makeBackup());
+  let copied = false;
+  try { await navigator.clipboard.writeText(text); copied = true; } catch (e) { copied = false; }
+  if (copied) { markBackedUp(); renderSheets(); toast('Backup copied — paste it somewhere safe', 'ok'); }
+  else { showBackupText(text); toast('Select all and copy the text below'); }
+}
+
+function buildRestore() {
+  const err = ui.restoreErr;
+  return sheetHead('Restore from backup', 'Choose a Pantry Run backup file') + `
+    <div class="sheet-bd">
+      <input type="file" id="restore-file" accept=".json,application/json,text/plain" hidden>
+      <button class="btn primary block" data-act="restore-choose">${svg('upload')}Choose backup file</button>
+      ${err ? `<div class="restore-err" role="alert">${esc(err)}</div>` : ''}
+      <div class="sec-note" style="margin-top:12px">You’ll see what’s in the backup and confirm before anything changes.</div>
+      <details class="restore-paste"${ui.restoreText ? ' open' : ''}>
+        <summary>Paste backup text instead</summary>
+        <textarea class="inp num" id="restore-text" data-act="restore-text" placeholder="Paste the backup text here" style="min-height:110px;font-size:12px">${esc(ui.restoreText || '')}</textarea>
+        <button class="btn block" data-act="restore-check" style="margin-top:9px">Check backup</button>
+      </details>
+    </div>`;
+}
+function sheetRestore() { commitTaxField(); ui.restoreErr = null; ui.restoreText = ''; showSheet(buildRestore, { kind: 'restore' }, 'push'); }
+
+function acceptBackupText(text) {
+  const r = parseBackup(text);
+  if (!r.ok) { ui.restoreErr = r.error; renderSheets(); return false; }
+  ui.restoreErr = null;
+  pendingRestore = { data: r.data, meta: r.meta, source: 'file' };
+  showSheet(buildRestorePreview, { kind: 'restore-preview' }, 'push');
+  return true;
+}
+
+function compareRows(now, next) {
+  const row = (label, a, b) => {
+    const diff = String(a) !== String(b);
+    return `<tr${diff ? ' class="diff"' : ''}><th scope="row">${label}</th><td>${esc(String(a))}</td><td>${esc(String(b))}</td></tr>`;
+  };
+  return `<table class="cmp num">
+    <thead><tr><th></th><th scope="col">Now</th><th scope="col">${pendingRestore && pendingRestore.source === 'undo' ? 'Before restore' : 'Backup'}</th></tr></thead>
+    <tbody>
+      ${row('Products', now.products, next.products)}
+      ${row('Running low', now.low, next.low)}
+      ${row('Need to buy', now.need, next.need)}
+      ${row('Favourites', now.favourites, next.favourites)}
+      ${row('Stores', now.stores, next.stores)}
+      ${row('Categories', now.categories, next.categories)}
+      ${now.storesArchived + now.categoriesArchived + next.storesArchived + next.categoriesArchived
+        ? row('Archived', now.storesArchived + now.categoriesArchived, next.storesArchived + next.categoriesArchived) : ''}
+      ${row('Trips', now.trips, next.trips)}
+      ${row('On the list', now.listItems, next.listItems)}
+      ${row('Currency', now.currency, next.currency)}
+      ${row('Weight unit', now.weightUnit, next.weightUnit)}
+      ${row('Tax rate', numfmt(now.taxRate) + '%', numfmt(next.taxRate) + '%')}
+    </tbody></table>`;
+}
+function buildRestorePreview() {
+  const pr = pendingRestore;
+  if (!pr) return sheetHead('Nothing to restore') + `<div class="sheet-bd"><div class="empty">Choose a backup file first.</div></div>`;
+  const undo = pr.source === 'undo';
+  const now = dataCounts(currentData()), next = dataCounts(pr.data);
+  const when = pr.meta.createdAt;
+  const sub = undo ? 'Your data from before the restore'
+    : when ? 'Backup from ' + new Date(when).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+    : 'Backup file (no date)';
+  const empty = !next.products && !next.trips && !next.listItems;
+  return sheetHead(undo ? 'Undo the restore?' : 'Restore this backup?', sub) + `
+    <div class="sheet-bd">
+      ${compareRows(now, next)}
+      ${empty ? `<div class="restore-err" role="alert">This ${undo ? 'copy' : 'backup'} has no products, trips or list — restoring it leaves the app empty.</div>` : ''}
+      <ul class="impact" style="margin-top:14px">
+        <li><b>Everything in the app now is replaced</b> — products, stock status, favourites, stores, categories, settings, the shopping list and history. Nothing is merged.</li>
+      </ul>
+      <ul class="impact keep" style="margin-top:8px">
+        ${undo
+          ? `<li>This puts back exactly what you had before the restore.</li>`
+          : `<li><b>A safety copy</b> of what you have now is kept first, so you can <b>Undo restore</b> from Settings.</li>`}
+      </ul>
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="close">Cancel</button>
+      <button class="btn dangerfill" data-act="restore-confirm" id="restore-go">${undo ? 'Undo' : 'Restore'}</button>
+    </div>`;
+}
+
+function buildBusy(title) {
+  return sheetHead(title) + `<div class="sheet-bd"><div class="busy" role="status"><span class="spin"></span>Don’t close the app — this takes a moment.</div></div>`;
+}
+function buildRestoreDone() {
+  const r = ui.restoreResult || {};
+  const ok = r.ok;
+  return sheetHead(ok ? (r.undo ? 'Restore undone' : 'Backup restored') : 'Restore didn’t finish') + `
+    <div class="sheet-bd">
+      ${ok
+        ? `<div class="sec-note" style="margin:0">${r.undo ? 'Your data is back to how it was before the restore.'
+            : 'Your data now matches the backup' + (r.when ? ' from ' + esc(fmtDate(r.when, true)) : '') + '.'}</div>
+           <div class="card" style="padding:4px 14px;margin-top:12px">
+             <div class="kv"><span class="k">Products</span><span class="v">${S.products.length}</span></div>
+             <div class="kv"><span class="k">Trips</span><span class="v">${S.trips.length}</span></div>
+             <div class="kv"><span class="k">On the list</span><span class="v">${S.active && S.active.items ? S.active.items.length : 0}</span></div>
+           </div>`
+        : `<div class="restore-err" role="alert" style="margin-top:0">${esc(r.message || 'Something went wrong.')}</div>`}
+    </div>
+    <div class="sheet-ft">
+      ${!r.undo && safetyHead ? `<button class="btn" data-act="restore-undo">Undo restore</button>` : ''}
+      <button class="btn primary" data-act="restore-finish">Done</button>
+    </div>`;
+}
+
+let restoring = false;
+async function runRestore() {
+  const pr = pendingRestore;
+  if (!pr || restoring) return;
+  restoring = true;
+  const undo = pr.source === 'undo';
+  showSheet(() => buildBusy(undo ? 'Undoing restore…' : 'Restoring…'), { kind: 'busy' }, 'root');
+  /* 1. keep a safety copy of what's here now — if that can't be kept,
+        stop before anything is replaced */
+  if (!undo) {
+    try { await saveSafety(currentData(), pr.meta.createdAt); }
+    catch (e) {
+      console.error(e);
+      restoring = false; pendingRestore = null;
+      ui.restoreResult = { ok: false, undo, message: 'Couldn’t keep a safety copy of your current data, so nothing was changed.' };
+      showSheet(buildRestoreDone, { kind: 'restore-done' }, 'root'); render();
+      return;
+    }
+  }
+  /* 2. replace */
+  try {
+    await replaceAllData(pr.data);
+    if (undo) await clearSafety().catch(() => {});
+    ui.restoreResult = { ok: true, undo, when: pr.meta.createdAt };
+  } catch (e) {
+    console.error(e);
+    ui.restoreResult = { ok: false, undo, message: undo
+      ? 'Undo didn’t finish. Your safety copy is still kept — try Undo restore again from Settings.'
+      : 'Some of the backup didn’t save. Your previous data is kept as a safety copy — tap Undo restore to put it back, or try the restore again.' };
+    if (backend === 'db') await reloadFromDb().catch(() => {});
+  }
+  restoring = false; pendingRestore = null;
+  view = 'home';
+  showSheet(buildRestoreDone, { kind: 'restore-done' }, 'root');
+  render();
+}
+/* After a partial failure, show what the database really holds. */
+async function reloadFromDb() {
+  const [prods, stores, cats, sets, act, trips] = await Promise.all([
+    DB.collection('products').limit(1000).get(), DB.doc('meta/stores').get(), DB.doc('meta/categories').get(),
+    DB.doc('meta/settings').get(), DB.doc('lists/active').get(), DB.collection('trips').orderBy('date', 'desc').limit(200).get()
+  ]);
+  S.products = prods.docs.map(d => clone(d.data())).sort((a, b) => a.name.localeCompare(b.name));
+  S.stores = stores.exists ? clone(stores.data().items || []) : [];
+  S.categories = cats.exists ? clone(cats.data().items || []) : [];
+  S.settings = Object.assign({ taxRate: 13, id: 'app' }, sets.exists ? clone(sets.data()) : {});
+  S.active = act.exists ? clone(act.data()) : null;
+  S.trips = trips.docs.map(d => clone(d.data()));
+}
+async function startUndo() {
+  if (!safetyHead) { toast('There’s no restore to undo'); return; }
+  let data = null;
+  try { data = await loadSafety(); } catch (e) { data = null; }
+  if (!data) { toast('The safety copy couldn’t be read'); return; }
+  const r = parseBackup(JSON.stringify({ app: BACKUP_APP, version: BACKUP_VERSION, data }));
+  if (!r.ok) { toast('The safety copy couldn’t be read'); return; }
+  pendingRestore = { data: r.data, meta: { createdAt: safetyHead.createdAt }, source: 'undo' };
+  showSheet(buildRestorePreview, { kind: 'restore-preview' }, sheetIsOpen() ? 'push' : 'root');
+}
+
+function backupSection() {
+  const u = safetyHead;
+  return `<div class="sec" style="margin-top:20px">
+    <div class="sec-head"><h2>Backup &amp; restore</h2></div>
+    <div class="sec-note" style="margin:0 0 10px" id="bk-last">${esc(lastBackupLine())}.</div>
+    <div style="display:flex;gap:9px">
+      <button class="btn" data-act="backup-open" style="flex:1">${svg('download')}Back up now</button>
+      <button class="btn" data-act="restore-open" style="flex:1">${svg('upload')}Restore…</button>
+    </div>
+    ${u ? `<div class="card undo-card">
+      <div style="flex:1;min-width:0"><div class="name">Undo last restore</div>
+      <div class="meta">Restored ${esc(fmtDate(u.createdAt))} · puts back ${u.counts ? u.counts.products : 0} products and ${u.counts ? u.counts.trips : 0} trips</div></div>
+      <button class="btn" data-act="restore-undo" style="flex:0 0 auto">Undo</button>
+    </div>` : ''}
+  </div>`;
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+/* Any uncaught error here used to make a control look dead. Surface it
+   instead, so a failure is visible rather than silent. */
+document.addEventListener('click', e => {
+  try { handleClick(e); }
+  catch (err) {
+    console.error(err);
+    toast('That didn’t go through — ' + (err && err.message ? err.message : 'unexpected error'));
+  }
+});
+
+function handleClick(e) {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if (restoring) return;   /* nothing else happens while data is being replaced */
+
+  switch (act) {
+    case 'go': go(el.dataset.v); return;
+    case 'scrim': if (e.target === el) dismissSheet(); return;
+    case 'close': dismissSheet(); return;
+    case 'settings': sheetSettings(); return;
+    case 'open-store': commitTaxField(); sheetStoreDetail(id); return;
+    case 'open-cat': commitTaxField(); sheetCategoryDetail(id); return;
+    case 'toggle-done': ui.showDone = !el.hasAttribute('open'); return;
+
+    case 'start-list': ensureActive(); go('list'); return;
+
+    case 'quick-add': {
+      const r = addProductToList(id);
+      if (r) toast(r.note, 'ok');
+      render();
+      syncOpenSheet(id);
+      return;
+    }
+    case 'add-menu': showSheet(buildAddMenu, {}, 'root'); return;
+    case 'dup-add-anyway': {
+      const layer = sheetStack.find(e => e.opts && e.opts.draft);
+      if (!layer) { closeSheet(); return; }
+      const d = layer.opts.draft;
+      saveProduct(d);                 /* a separate product — nothing is merged */
+      closeThroughDraft(); render();
+      toast(d.name + ' added as a separate product', 'ok');
+      return;
+    }
+    case 'dup-open': {
+      const layer = sheetStack.find(e => e.opts && e.opts.draft);
+      const typed = layer ? layer.opts.draft.name : '';
+      const existing = productById(id); if (!existing) return;
+      closeSheet(); render();
+      sheetProduct(id);
+      toast(`Opened ${existing.name}${typed ? ` — “${typed}” wasn’t added` : ''}`);
+      return;
+    }
+    case 'menu-add-cat': {
+      const inp = document.querySelector('.scrim:last-child #menu-newcat');
+      const r = addCategory(inp ? inp.value : '');
+      if (!r) { toast('Give the category a name'); if (inp) inp.focus(); return; }
+      if (r.duplicate) { toast(r.rec.name + ' is already a category'); if (inp) inp.select(); return; }
+      closeSheet(); render();
+      toast(r.restored ? r.rec.name + ' restored from archive' : r.rec.name + ' added', 'ok');
+      return;
+    }
+    case 'open-filter': sheetFilter(); return;
+    case 'toggle-filter': {
+      const g = el.dataset.g, v = el.dataset.v;
+      if (g === 'fav') ui.filters.fav = !ui.filters.fav;
+      else { const set = ui.filters[g]; if (set.has(v)) set.delete(v); else set.add(v); }
+      renderSheets(); render(); return;
+    }
+    case 'drop-filter': {
+      const g = el.dataset.g, v = el.dataset.v;
+      if (g === 'fav') ui.filters.fav = false; else ui.filters[g].delete(v);
+      render(); return;
+    }
+    case 'clear-filters': {
+      clearFilters();
+      if (sheetIsOpen()) renderSheets();
+      render(); return;
+    }
+    case 'toggle-fav': {
+      const p = productById(id); if (!p) return;
+      p.favourite = !p.favourite;
+      if (!p.favourite) delete p.favourite;
+      saveProduct(p);
+      el.setAttribute('aria-pressed', String(!!p.favourite));
+      toast(p.favourite ? p.name + ' added to favourites' : p.name + ' removed from favourites', p.favourite ? 'ok' : undefined);
+      /* only re-render when a favourites filter would change what's shown */
+      if (ui.filters.fav) render();
+      return;
+    }
+    case 'draft-fav': {
+      const d = ui.sheet && ui.sheet.draft; if (!d) return;
+      d.favourite = !d.favourite;
+      el.setAttribute('aria-pressed', String(!!d.favourite));
+      el.setAttribute('aria-label', d.favourite ? 'Favourite — tap to remove' : 'Mark as favourite');
+      return;
+    }
+    case 'mark-stock': sheetMarkStock(); return;
+    case 'set-stock-quick': {
+      const p = productById(id); if (!p) return;
+      const want = el.dataset.v;
+      p.stock = (p.stock === want) ? 'in' : want;   /* tapping the active one clears it */
+      saveProduct(p);
+      /* update just this row so a long catalog doesn't jump under your thumb */
+      const row = document.querySelector(`.scrim:last-child .markrow[data-pid="${id}"]`);
+      if (row) {
+        row.querySelectorAll('.stockbtn').forEach(btn =>
+          btn.setAttribute('aria-pressed', String(p.stock === btn.dataset.v)));
+      }
+      const hd = document.querySelector('.scrim:last-child .sheet-hd .sub');
+      if (hd) {
+        const n = S.products.filter(x => x.stock === 'low' || x.stock === 'need').length;
+        hd.textContent = n ? n + ' marked so far' : 'Tap Low or Need on anything';
+      }
+      render();
+      return;
+    }
+    case 'quick-remove': {
+      const p = productById(id);
+      const gone = removeProductFromList(id);
+      toast(gone ? (p ? p.name : 'Item') + ' removed from list'
+                 : 'That product isn’t on the list');
+      render();
+      syncOpenSheet(id);
+      return;
+    }
+
+
+    case 'new-product': closeSheet(); sheetProduct(null); return;
+    case 'open-product': sheetProduct(id); return;
+
+    case 'ptype': {
+      const d = ui.sheet.draft; if (!d) return;
+      syncDraft();
+      d.unitType = el.dataset.v;
+      refreshProductSheetPrice(); return;
+    }
+    case 'wunit': {
+      const d = ui.sheet.draft; if (!d) return;
+      syncDraft();
+      d.weightUnit = el.dataset.v;
+      refreshProductSheetPrice(); return;
+    }
+    case 'stock': {
+      const d = ui.sheet.draft; if (!d) return;
+      d.stock = el.dataset.v;
+      el.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === el)));
+      return;
+    }
+    case 'save-product': saveProductSheet(); return;
+    case 'delete-product': {
+      const p = productById(id); if (!p) return;
+      if (el.dataset.confirm !== '1') {
+        el.dataset.confirm = '1';
+        el.innerHTML = svg('trash') + 'Tap again to delete ' + esc(p.name);
+        setTimeout(() => { if (el.isConnected) { el.dataset.confirm = ''; el.innerHTML = svg('trash') + 'Delete product'; } }, 3500);
+        return;
+      }
+      S.products = S.products.filter(x => x.id !== id);
+      Persist.deleteProduct(id);
+      dismissSheet(); render(); toast(p.name + ' deleted');
+      return;
+    }
+
+    /* --- list item interactions --- */
+    case 'check': {
+      const it = findItem(id); if (!it) return;
+      const goingIn = !it.checked;
+      it.checked = !it.checked;
+      it.checkedAt = it.checked ? todayISO() : null;
+      if (it.checked) ui.showDone = false;
+      Persist.saveActive();
+      /* show the completed state, let the row fade out, then move it into
+         Completed Items — never an instant disappearance */
+      const row = el.closest('.li');
+      if (goingIn && row && !reduceMotion()) {
+        el.setAttribute('aria-checked', 'true');
+        row.classList.add('leaving');
+        renderBar();                       /* totals update straight away */
+        clearTimeout(checkTimer);
+        checkTimer = setTimeout(render, 170);
+      } else {
+        render();
+      }
+      return;
+    }
+    case 'qty': {
+      const it = findItem(id); if (!it) return;
+      const d = Number(el.dataset.d);
+      const next = (it.qty || 1) + d;
+      if (next < 1) { removeListItem(id); toast(it.name + ' removed'); render(); return; }
+      it.qty = next; Persist.saveActive(); render(); return;
+    }
+    case 'remove': {
+      const it = findItem(id); if (!it) return;
+      removeListItem(id); toast(it.name + ' removed'); render(); return;
+    }
+    case 'price': sheetPrice(id); return;
+    case 'price-save': {
+      const it = findItem(id); if (!it) return;
+      const v = parseNum(document.getElementById('pr-in').value);
+      it.actualPrice = (v != null && v >= 0) ? v : null;
+      Persist.saveActive(); closeSheet(); render(); return;
+    }
+    case 'price-clear': {
+      const it = findItem(id); if (!it) return;
+      it.actualPrice = null; Persist.saveActive(); closeSheet(); render(); return;
+    }
+    case 'store': sheetStore(id); return;
+    case 'category': sheetCategoryPick(id); return;
+    case 'set-cat': {
+      const it = findItem(id); if (!it) return;
+      setItemCategory(it, el.dataset.cat || null);
+      closeSheet(); render(); return;
+    }
+    case 'add-cat-for': {
+      const inp = document.querySelector('.scrim:last-child #newcat');
+      const r = addCategory(inp ? inp.value : '');
+      if (!r) { toast('Give the category a name'); return; }
+      const it = findItem(id);
+      if (it) setItemCategory(it, r.rec.id);
+      closeSheet(); render();
+      toast(r.restored ? r.rec.name + ' restored from archive' : r.duplicate ? 'Using existing ' + r.rec.name : r.rec.name + ' added', 'ok');
+      return;
+    }
+    case 'set-store': {
+      const it = findItem(id); if (!it) return;
+      it.storeId = el.dataset.store || null;
+      if (it.actualPrice == null) {
+        const p = productById(it.productId);
+        if (p) it.expectedPrice = expectedPriceFor(p, it.storeId);
+      }
+      Persist.saveActive(); closeSheet(); render(); return;
+    }
+    case 'add-store-for': {
+      const inp = document.querySelector('.scrim:last-child #newstore');
+      const r = addStore(inp ? inp.value : '');
+      if (!r) { toast('Give the store a name'); return; }
+      const it = findItem(id);
+      if (it) {
+        it.storeId = r.rec.id;
+        if (it.actualPrice == null) { const p = productById(it.productId); if (p) it.expectedPrice = expectedPriceFor(p, r.rec.id); }
+        Persist.saveActive();
+      }
+      closeSheet(); render();
+      toast(r.restored ? r.rec.name + ' restored from archive' : r.duplicate ? 'Using existing ' + r.rec.name : r.rec.name + ' added', 'ok');
+      return;
+    }
+
+    case 'fold': {
+      const scope = el.dataset.scope, key = el.dataset.key;
+      const set = ui.collapsed[scope]; if (!set) return;
+      if (set.has(key)) set.delete(key); else set.add(key);
+      if (scope === 'pick') { document.getElementById('pickres').innerHTML = pickResults(pickMatches()); return; }
+      if (scope === 'mark') { document.getElementById('markres').innerHTML = markResults(); return; }
+      render(); return;
+    }
+    case 'group': ui.listGroup = el.dataset.v; render(); return;
+    case 'pick-items': ui.pickQuery = ''; sheetPick(); return;
+
+    case 'finish': sheetFinish(); return;
+    case 'finish-confirm': finishTrip(); return;
+    case 'psel': {
+      const set = ui.sheet.priceSel; if (!set) return;
+      const on = el.getAttribute('aria-checked') === 'true';
+      if (on) set.delete(id); else set.add(id);
+      el.setAttribute('aria-checked', String(!on)); return;
+    }
+    case 'apply-prices': {
+      const { priceChanges, priceSel } = ui.sheet;
+      let n = 0;
+      for (const c of priceChanges) {
+        if (!priceSel.has(c.productId)) continue;
+        const p = productById(c.productId);
+        if (p) { p.usualPrice = c.next; Persist.saveProduct(p); n++; }
+      }
+      closeSheet(); render();
+      toast(n ? n + (n === 1 ? ' usual price updated' : ' usual prices updated') : 'Usual prices unchanged');
+      return;
+    }
+
+    case 'open-trip': sheetTrip(id); return;
+    case 'rename-trip': {
+      const inp = document.querySelector('.scrim:last-child #trip-name');
+      const t = renameTrip(id, inp ? inp.value : '');
+      if (!t) return;
+      renderSheets(); render();
+      toast(t.name ? 'Renamed to “' + t.name + '”' : 'Name cleared — showing the date', 'ok');
+      return;
+    }
+    case 'ask-delete-trip': {
+      if (!S.trips.some(x => x.id === id)) return;
+      showSheet(() => buildDeleteTrip(id), { tripId: id }, 'push');
+      return;
+    }
+    case 'confirm-delete-trip': {
+      const plan = deleteTrip(id);
+      if (!plan) { closeSheet(); render(); return; }
+      closeSheet(); render();
+      toast(`Trip deleted — ${plan.priceRecords} price ${plan.priceRecords === 1 ? 'record' : 'records'} removed, products kept`);
+      return;
+    }
+    case 'tsel': {
+      const set = ui.sheet.tripSel; if (!set) return;
+      const on = el.getAttribute('aria-checked') === 'true';
+      if (on) set.delete(id); else set.add(id);
+      el.setAttribute('aria-checked', String(!on));
+      const btn = document.getElementById('addsel');
+      if (btn) { btn.disabled = set.size === 0; btn.textContent = set.size ? `Add Selected Again (${set.size})` : 'Add Selected Again'; }
+      return;
+    }
+    case 'add-selected': {
+      const t = S.trips.find(x => x.id === id); if (!t) return;
+      const set = ui.sheet.tripSel;
+      const picked = (t.items || []).filter(i => set.has(i.id));
+      const n = copyItemsToList(picked);
+      closeSheet(); go('list');
+      toast(n + (n === 1 ? ' item added' : ' items added'));
+      return;
+    }
+    case 'repeat': {
+      const t = S.trips.find(x => x.id === id); if (!t) return;
+      const had = !!(S.active && S.active.items.length);
+      const n = copyItemsToList(t.items || []);
+      closeSheet(); go('list');
+      toast(had ? n + ' items added to your list' : 'Trip copied — ' + n + ' items');
+      return;
+    }
+
+    /* --- settings --- */
+    case 'add-store': {
+      const inp = document.querySelector('.scrim:last-child #s-newstore');
+      const r = addStore(inp ? inp.value : '');
+      if (!r) { toast('Give the store a name'); return; }
+      sheetSettings(); render();
+      toast(r.restored ? r.rec.name + ' restored from archive' : r.duplicate ? r.rec.name + ' is already saved' : r.rec.name + ' added', 'ok');
+      return;
+    }
+    case 'archive-store': case 'archive-cat': {
+      const kind = act === 'archive-store' ? 'store' : 'cat';
+      const rec = archiveRecord(kind, id, true);
+      if (!rec) return;
+      sheetSettings(); render();
+      toast(rec.name + ' archived — restore it under Archived'); return;
+    }
+    case 'restore-store': case 'restore-cat': {
+      const kind = act === 'restore-store' ? 'store' : 'cat';
+      const rec = archiveRecord(kind, id, false);
+      if (!rec) return;
+      sheetSettings(); render();
+      toast(rec.name + ' restored', 'ok'); return;
+    }
+    case 'purge-store': case 'purge-cat': {
+      const kind = act === 'purge-store' ? 'store' : 'cat';
+      const rec = (kind === 'store' ? S.stores : S.categories).find(x => x.id === id);
+      if (!rec) return;
+      const n = kind === 'store' ? productsForStore(id).length : productsForCategory(id).length;
+      if (!armDelete(el, 'Delete ' + rec.name + ' permanently',
+        `Delete ${rec.name} for good? Past trips and price history will stop showing its name${
+          n ? `, and ${n} product${n === 1 ? '' : 's'} will lose it` : ''}. Tap again to confirm.`)) return;
+      purgeRecord(kind, id);
+      sheetSettings(); render(); toast(rec.name + ' deleted permanently'); return;
+    }
+    case 'rename-store': case 'rename-cat': {
+      const kind = act === 'rename-store' ? 'store' : 'cat';
+      const input = document.querySelector('.scrim:last-child #rename');
+      const rec = renameRecord(kind, id, input ? input.value : '');
+      if (!rec) { if (input) input.focus(); return; }
+      renderSheets(); render(); toast('Renamed to ' + rec.name, 'ok'); return;
+    }
+    case 'add-cat': {
+      const inp = document.querySelector('.scrim:last-child #s-newcat');
+      const r = addCategory(inp ? inp.value : '');
+      if (!r) { toast('Give the category a name'); return; }
+      sheetSettings(); render();
+      toast(r.restored ? r.rec.name + ' restored from archive' : r.duplicate ? r.rec.name + ' is already saved' : r.rec.name + ' added', 'ok');
+      return;
+    }
+    case 'backup-open': sheetBackup(); return;
+    case 'backup-download': doBackupDownload(el); return;
+    case 'backup-copy': doBackupCopy(); return;
+    case 'restore-open': sheetRestore(); return;
+    case 'restore-choose': {
+      const f = document.querySelector('.scrim:last-child #restore-file');
+      if (f) { f.value = ''; f.click(); }
+      return;
+    }
+    case 'restore-check': {
+      const ta = document.querySelector('.scrim:last-child #restore-text');
+      ui.restoreText = ta ? ta.value : '';
+      acceptBackupText(ui.restoreText);
+      return;
+    }
+    case 'restore-confirm': runRestore(); return;
+    case 'restore-undo': startUndo(); return;
+    case 'restore-finish': closeSheet(); render(); return;
+    case 'set-wunit-default': {
+      const u = el.dataset.v;
+      if (!WEIGHT_UNITS.includes(u)) return;
+      commitTaxField();
+      S.settings.weightUnit = u; Persist.saveMeta('settings');
+      renderSheets(); toast('New weighed products will use ' + u, 'ok');
+      return;
+    }
+    case 'save-settings': {
+      const v = parseNum(document.getElementById('f-tax').value);
+      S.settings.taxRate = (v != null && v >= 0) ? v : 0;
+      Persist.saveMeta('settings');
+      closeSheet(); render(); return;
+    }
+  }
+}
+
+/* settings that apply the moment they change */
+document.addEventListener('change', e => {
+  if (e.target.id === 'f-currency') {
+    const c = e.target.value;
+    if (!CURRENCIES.some(x => x[0] === c)) return;
+    commitTaxField();
+    S.settings.currency = c; Persist.saveMeta('settings');
+    renderSheets(); render();
+    toast('Prices now shown in ' + c, 'ok');
+  } else if (e.target.id === 'f-tax') {
+    commitTaxField(); render();
+  }
+});
+
+/* backup file chosen */
+document.addEventListener('change', async e => {
+  if (e.target.id !== 'restore-file') return;
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (file.size > 25 * 1024 * 1024) { ui.restoreErr = 'That file is too large to be a Pantry Run backup.'; renderSheets(); return; }
+  let text = '';
+  try { text = await file.text(); }
+  catch (err) { ui.restoreErr = 'That file couldn’t be opened.'; renderSheets(); return; }
+  acceptBackupText(text);
+});
+
+/* text inputs */
+document.addEventListener('input', e => {
+  if (e.target.id === 'restore-text') { ui.restoreText = e.target.value; return; }
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  if (el.dataset.act === 'cat-search') {
+    ui.catQuery = el.value;
+    const scroll = window.scrollY;
+    render();
+    const q = document.getElementById('catsearch');
+    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    window.scrollTo(0, scroll);
+  } else if (el.dataset.act === 'pick-search') {
+    ui.pickQuery = el.value;
+    document.getElementById('pickres').innerHTML = pickResults(pickMatches());
+  } else if (el.dataset.act === 'mark-search') {
+    ui.markQuery = el.value;
+    document.getElementById('markres').innerHTML = markResults();
+  }
+});
+
+/* weight commits on blur / Enter so totals don't thrash while typing */
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-act="weight"]');
+  if (!el) return;
+  const it = findItem(el.dataset.id); if (!it) return;
+  const v = parseNum(el.value);
+  it.weight = (v != null && v >= 0) ? v : null;
+  Persist.saveActive(); render();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ui.sheet && !restoring) { dismissSheet(); return; }
+  if (e.key !== 'Enter') return;
+  const w = e.target.closest('[data-act="weight"]');
+  if (w) { e.target.blur(); return; }
+  if (e.target.id === 'pr-in') {
+    e.preventDefault();
+    document.querySelector('[data-act="price-save"]')?.click();
+  }
+  if (e.target.id === 'newstore') { e.preventDefault(); document.querySelector('[data-act="add-store-for"]')?.click(); }
+  if (e.target.id === 'newcat') { e.preventDefault(); document.querySelector('[data-act="add-cat-for"]')?.click(); }
+  if (e.target.id === 'trip-name') { e.preventDefault(); document.querySelector('.scrim:last-child [data-act="rename-trip"]')?.click(); }
+  if (e.target.id === 'menu-newcat') { e.preventDefault(); document.querySelector('.scrim:last-child [data-act="menu-add-cat"]')?.click(); }
+  if (e.target.id === 's-newstore') { e.preventDefault(); document.querySelector('[data-act="add-store"]')?.click(); }
+  if (e.target.id === 's-newcat') { e.preventDefault(); document.querySelector('[data-act="add-cat"]')?.click(); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'f-freq') {
+    const wrap = document.getElementById('f-customfreq');
+    if (wrap) wrap.hidden = e.target.value !== 'custom';
+  }
+});
+
+/* ---------------- product sheet plumbing ---------------- */
+function syncDraft(target) {
+  const d = target || (ui.sheet && ui.sheet.draft); if (!d) return;
+  const g = id => document.getElementById(id);
+  if (g('f-name')) d.name = g('f-name').value.trim();
+  if (g('f-cat')) d.categoryId = g('f-cat').value || null;
+  if (g('f-price')) d.usualPrice = parseNum(g('f-price').value);
+  if (g('f-qty')) {
+    const v = parseNum(g('f-qty').value);
+    if (d.unitType === 'weight') d.defaultWeight = (v != null && v > 0) ? v : 1;
+    else d.defaultQty = (v != null && v > 0) ? Math.round(v) : 1;
+  }
+  if (g('f-pkg')) d.packageSize = g('f-pkg').value.trim();
+  if (g('f-store')) d.preferredStoreId = g('f-store').value || null;
+  if (g('f-shelf')) d.shelfLife = g('f-shelf').value.trim();
+  if (g('f-freq')) d.frequency = g('f-freq').value;
+  if (g('f-customfreq-in')) d.customFrequency = g('f-customfreq-in').value.trim();
+  if (g('f-notes')) d.notes = g('f-notes').value.trim();
+}
+function refreshProductSheetPrice() {
+  const d = ui.sheet.draft;
+  const weighted = d.unitType === 'weight';
+  document.querySelectorAll('[data-act="ptype"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === d.unitType)));
+  document.querySelectorAll('[data-act="wunit"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === (d.weightUnit || 'lb'))));
+  const wu = document.getElementById('f-wtunit');
+  if (wu) wu.hidden = !weighted;
+  const block = document.getElementById('f-priceblock');
+  if (!block) return;
+  block.innerHTML = `
+    <div class="pair">
+      <div class="field">
+        <label for="f-price">Usual price</label>
+        <div class="pre"><span class="sym">${esc(currencySymbol())}</span><input id="f-price" type="text" inputmode="decimal" placeholder="0.00"
+          value="${d.usualPrice != null ? esc(Number(d.usualPrice).toFixed(2)) : ''}">
+          <span class="suf">${weighted ? '/ ' + esc(d.weightUnit || 'lb') : 'each'}</span></div>
+      </div>
+      <div class="field">
+        <label for="f-qty">${weighted ? 'Typical weight' : 'Default quantity'}</label>
+        <div class="pre"><input id="f-qty" type="text" inputmode="decimal"
+          value="${esc(weighted ? numfmt(d.defaultWeight || 1) : numfmt(d.defaultQty || 1))}">
+          <span class="suf">${weighted ? esc(d.weightUnit || 'lb') : 'default'}</span></div>
+      </div>
+    </div>`;
+}
+function saveProductSheet() {
+  syncDraft();
+  const d = ui.sheet.draft;
+  const wasNew = ui.sheet.isNew;
+  if (!d.name) {
+    toast('Give the product a name');
+    document.getElementById('f-name')?.focus();
+    return;
+  }
+  /* new products only: check for likely duplicates and warn before saving.
+     Re-checks on every Save, so fixing the name clears the warning. */
+  if (wasNew) {
+    const matches = findDuplicates(d.name, d.id);
+    if (matches.length) {
+      showSheet(() => buildDupWarning(d.name, matches), { dupFor: d }, 'push');
+      return;
+    }
+  }
+  saveProduct(d);
+  dismissSheet(); render();
+  toast(wasNew ? d.name + ' added to your catalog' : d.name + ' saved');
+}
+/* close the duplicate warning and the new-product form beneath it */
+function closeThroughDraft() {
+  while (sheetStack.length) {
+    const e = sheetStack.pop();
+    if (e.opts && e.opts.draft) break;
+  }
+  if (sheetStack.length) renderSheets(); else closeSheet();
+}
+
+/* ---------------- trip actions ---------------- */
+function copyItemsToList(items) {
+  const list = ensureActive();
+  let n = 0;
+  for (const src of items) {
+    const p = productById(src.productId);
+    if (p) {
+      if (onActiveList(p.id)) continue;
+      const storeId = src.storeId || p.preferredStoreId || null;
+      list.items.push(makeListItem(p, {
+        storeId,
+        qty: src.unitType === 'weight' ? 1 : (src.qty || p.defaultQty || 1),
+        weight: src.unitType === 'weight' ? (src.weight || p.defaultWeight || 1) : null,
+        expectedPrice: expectedPriceFor(p, storeId)
+      }));
+    } else {
+      /* product no longer in the catalog — carry the snapshot forward */
+      list.items.push(Object.assign({}, src, {
+        id: uid('li'), checked: false, checkedAt: null, actualPrice: null
+      }));
+    }
+    n++;
+  }
+  Persist.saveActive();
+  return n;
+}
+
+/* ---- trip management ---- */
+const tripTitle = t => (t && t.name) ? t.name : fmtDate(t && t.date);
+
+function renameTrip(tripId, name) {
+  const t = S.trips.find(x => x.id === tripId); if (!t) return null;
+  const clean = String(name || '').trim();
+  if (clean) t.name = clean; else delete t.name;     /* blank = back to the date */
+  Persist.saveTrip(t);
+  return t;
+}
+
+/* Does this price record belong to this trip? New records carry tripId.
+   Older ones are matched on every field the trip wrote — date, product,
+   store and price — so a same-day price from another store is never taken. */
+function recordFromTrip(entry, trip, product) {
+  if (entry.tripId) return entry.tripId === trip.id;
+  if (entry.date !== trip.date) return false;
+  return (trip.items || []).some(it =>
+    it.checked && it.productId === product.id &&
+    (it.storeId || null) === (entry.storeId || null) &&
+    effectiveUnitPrice(it) === entry.price);
+}
+
+/* Work out everything a deletion would change, without changing anything. */
+function tripDeletionPlan(tripId) {
+  const trip = S.trips.find(x => x.id === tripId); if (!trip) return null;
+  const others = S.trips.filter(x => x.id !== tripId);
+  const plan = { trip, priceRecords: 0, products: [], purchaseReverted: 0, stillInCatalog: 0 };
+  const touched = new Set((trip.items || []).filter(i => i.checked).map(i => i.productId));
+  for (const pid of touched) {
+    const p = productById(pid);
+    if (!p) continue;
+    plan.stillInCatalog++;
+    const drop = (p.priceHistory || []).filter(e => recordFromTrip(e, trip, p)).length;
+    /* purchase fields fall back to the most recent remaining trip that bought it */
+    let prev = null;
+    for (const t of others) {
+      const it = (t.items || []).find(i => i.checked && i.productId === pid);
+      if (it && (!prev || String(t.date) > String(prev.t.date))) prev = { t, it };
+    }
+    const next = prev
+      ? { lastPurchased: prev.t.date, lastStoreId: prev.it.storeId || null,
+          typicalQty: prev.it.unitType === 'weight' ? prev.it.weight : prev.it.qty }
+      : { lastPurchased: null, lastStoreId: null, typicalQty: null };
+    /* only rewrite purchase fields if they currently point at this trip */
+    const pointsHere = p.lastPurchased === trip.date;
+    plan.priceRecords += drop;
+    if (pointsHere) plan.purchaseReverted++;
+    plan.products.push({ p, drop, pointsHere, next });
+  }
+  return plan;
+}
+
+function deleteTrip(tripId) {
+  const plan = tripDeletionPlan(tripId); if (!plan) return null;
+  const { trip } = plan;
+  for (const { p, drop, pointsHere, next } of plan.products) {
+    if (!drop && !pointsHere) continue;
+    if (drop) p.priceHistory = (p.priceHistory || []).filter(e => !recordFromTrip(e, trip, p));
+    if (pointsHere) Object.assign(p, next);
+    Persist.saveProduct(p);            /* the product itself is never removed */
+  }
+  S.trips = S.trips.filter(x => x.id !== tripId);
+  Persist.deleteTrip(tripId);
+  return plan;
+}
+
+function finishTrip() {
+  const list = S.active;
+  if (!list) return;
+  const date = todayISO();
+  const totals = computeTotals(list);
+  const trip = {
+    id: uid('trip'), date, taxRate: Number(S.settings.taxRate) || 0,
+    items: JSON.parse(JSON.stringify(list.items)),
+    totals: { subtotal: totals.purchased, tax: totals.tax, total: totals.purchased + totals.tax }
+  };
+  /* tax applies to the purchased subtotal */
+  trip.totals.tax = trip.totals.subtotal * (trip.taxRate / 100);
+  trip.totals.total = trip.totals.subtotal + trip.totals.tax;
+
+  /* price + purchase history */
+  const changes = [];
+  for (const it of trip.items) {
+    if (!it.checked) continue;
+    const p = productById(it.productId);
+    if (!p) continue;
+    const price = effectiveUnitPrice(it);
+    if (price != null) {
+      /* tripId ties the record to the trip that created it, so deleting the
+         trip can remove exactly its records and nothing else */
+      p.priceHistory = (p.priceHistory || []).concat([{ price, storeId: it.storeId || null, date, tripId: trip.id }]);
+      if (p.priceHistory.length > 40) p.priceHistory = p.priceHistory.slice(-40);
+      if (it.actualPrice != null && it.actualPrice !== p.usualPrice) {
+        changes.push({ productId: p.id, name: p.name, old: p.usualPrice, next: it.actualPrice });
+      }
+    }
+    p.lastPurchased = date;
+    p.lastStoreId = it.storeId || null;
+    p.typicalQty = it.unitType === 'weight' ? it.weight : it.qty;
+    if (p.stock !== 'in') p.stock = 'in';
+    Persist.saveProduct(p);
+  }
+
+  S.trips.unshift(trip);
+  Persist.saveTrip(trip);
+  S.active = null;
+  Persist.saveActive();
+
+  closeSheet();
+  go('home');
+  if (changes.length) sheetUpdatePrices(changes);
+  else toast('Trip saved to History');
+}
+
+/* ---------------- start ---------------- */
+render();
+boot();
+</script>
