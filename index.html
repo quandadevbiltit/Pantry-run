@@ -865,7 +865,9 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
   .home-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 var(--gap-4);align-items:start}
   /* Catalog: category groups flow into columns */
   .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,284px),1fr));gap:0 var(--gap-3);align-items:start}
-  .narrow{max-width:760px}
+  .narrow{max-width:760px;margin-inline:auto}
+  /* History is a single column: centre it, and centre its header with it */
+  body[data-view="history"] #screen,body[data-view="history"] .appbar .wrap{max-width:calc(760px + 2 * clamp(20px,3vw,32px))}
   /* totals: four figures across, Finish Trip beneath */
   .bar .grid{grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;gap:6px 20px}
   .bar .cell.big{grid-column:auto!important}
@@ -881,6 +883,17 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
   /* Shopping List with the catalog beside it */
   .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,390px);gap:var(--gap-4);align-items:start}
   .split .addmore{display:none}
+  /* both columns start on the same line */
+  .split{margin-top:14px}
+  .split>.split-main>.sec:first-child{margin-top:0!important}
+  .split>.split-side{margin-top:0}
+  /* nothing on the list yet: the two cards are the same height */
+  .split.is-empty{align-items:stretch}
+  .split.is-empty>.split-main{display:flex;flex-direction:column}
+  .split.is-empty>.split-main>.sec:first-child{flex:1;display:flex;flex-direction:column}
+  .split.is-empty>.split-main .empty{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .split.is-empty .panel-bd,.split.is-empty #pickres{display:flex;flex-direction:column;flex:1}
+  .split.is-empty #pickres>.empty:only-child{flex:1;display:flex;flex-direction:column;justify-content:center;margin-top:12px}
   .split-side{position:sticky;top:calc(var(--appbar-h,72px) + 14px);margin-top:14px;
     max-height:calc(100vh - var(--appbar-h,72px) - var(--bar-h,0px) - 44px);
     display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);
@@ -1769,6 +1782,7 @@ function toast(msg, kind) {
    RENDER
    ============================================================ */
 function render() {
+  document.body.dataset.view = view;
   renderAppbar();
   renderTabs();
   const el = document.getElementById('screen');
@@ -1784,7 +1798,7 @@ function render() {
   const caret = focusId && document.activeElement.selectionStart != null ? document.activeElement.selectionStart : null;
   el.innerHTML = view === 'home' ? viewHome()
     : view === 'catalog' ? viewCatalog()
-    : view === 'list' ? (isSplit() ? `<div class="split"><div class="split-main">${viewList()}</div>${catalogPanel()}</div>` : viewList())
+    : view === 'list' ? (isSplit() ? `<div class="split${S.active && S.active.items.length ? '' : ' is-empty'}"><div class="split-main">${viewList()}</div>${catalogPanel()}</div>` : viewList())
     : `<div class="narrow">${viewHistory()}</div>`;
   keep.forEach(([k, top]) => { const x = el.querySelector(`[data-keep="${k}"]`); if (x) x.scrollTop = top; });
   if (focusId === 'pickq-side') {
