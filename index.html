@@ -848,6 +848,55 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
 .split-side{border-radius:var(--r)!important;box-shadow:var(--shadow-1)}
 .panel-bd .card{background:var(--surface)}
 
+
+/* ---- tidy group headers: no rules, no pills ---- */
+.grouphd{flex-wrap:nowrap}
+.grouphd h3{flex:1 1 auto}
+.grouphd .gh-meta{display:flex;align-items:baseline;gap:12px;flex:0 0 auto;margin-left:8px}
+.grouphd .n{background:none!important;padding:0!important;font-size:13px;font-weight:600;color:var(--ink-3)}
+.grouphd .gh-sum{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.grouphd .rule{display:none}
+.catcount{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;margin-top:4px}
+.linkbtn{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 4px;color:var(--accent-deep);font-weight:650;font-size:14px;flex:0 0 auto}
+.linkbtn svg.lk{width:15px;height:15px}
+.linkbtn:active{opacity:.7}
+.sec-head .linkbtn{min-height:32px;margin-block:-8px;position:relative}
+.sec-head .linkbtn::after{content:"";position:absolute;inset:-6px -4px}
+.arrrow{gap:10px}
+.arrrow .gh-ico{width:32px;height:32px;flex:0 0 32px;border-radius:10px;background:var(--accent-soft);color:var(--accent-deep);display:grid;place-items:center}
+.arrrow .gh-ico svg{width:18px;height:18px}
+.arrrow .arr{background:var(--surface-2);color:var(--ink)}
+.arrrow .arr:disabled{opacity:.3;cursor:default}
+.arrrow .arr svg{width:18px;height:18px;stroke-width:2}
+
+/* ---- calm shopping-list rows ---- */
+.li{padding:10px 12px 10px 8px;gap:2px;align-items:flex-start}
+.li .check{margin-top:0}
+.li-open{display:block;width:100%;min-height:44px;padding:3px 2px;border-radius:10px;text-align:left}
+.li-open .top{display:flex;gap:12px;align-items:baseline}
+.li-open .nm{display:block;flex:1;min-width:0}
+.li-open .tot{flex:0 0 auto}
+.li-open .tot.missing{color:var(--ink-3)}
+.lmeta{display:flex;flex-wrap:wrap;align-items:center;gap:2px 7px;margin-top:3px;font-size:14px;color:var(--ink-2);line-height:1.35}
+.lmeta .sep{color:var(--ink-3)}
+.lmeta .warn{color:var(--warn);font-weight:600}
+.lmeta .paid{color:var(--accent-deep);font-weight:650}
+.lmeta .lcar{width:14px;height:14px;flex:0 0 14px;color:var(--ink-3);margin-left:2px;transition:transform .16s ease}
+.li.open .lcar{transform:rotate(180deg)}
+.li.open{background:var(--surface-3)}
+.li-edit{margin-top:10px;display:flex;flex-direction:column;gap:12px;padding-bottom:2px;animation:editin .16s ease}
+@keyframes editin{from{opacity:0;transform:translateY(-3px)}}
+.li-edit .ctl{margin-top:0}
+.li-edit .subwrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0}
+.li-edit .chipbtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;margin-block:0}
+.li-edit .subwrap{row-gap:12px}
+.li-edit .chipbtn svg{width:14px;height:14px;flex:0 0 14px;color:var(--ink-3)}
+.li-edit .mi{font-size:13px;color:var(--ink-3)}
+.li-rm{align-self:flex-start;border-color:transparent;background:transparent;color:var(--alert);padding:0 8px;margin-left:-8px}
+.li-rm:hover{background:var(--alert-soft)}
+.li.done .li-open .tot{color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){ .li-edit{animation:none} .lmeta .lcar{transition:none} }
+
 /* ============ WIDE SCREENS (iPad, laptop) — phones never reach these ============ */
 @media (min-width:740px){
   :root{--rail:96px}
@@ -970,6 +1019,8 @@ const I = {
   clipboard:'<rect x="5.5" y="5" width="13" height="16" rx="2.5"/><path d="M9 5V3.5h6V5"/><path d="M9 11.5l1.8 1.8 3.4-3.4M9 16.5h6"/>',
   lowstock:'<path d="M3.5 7.5l6 6 3.5-3.5 7.5 7.5"/><path d="M20.5 12.5v5h-5"/>',
   chevdown:'<path d="M5.5 9 12 15.5 18.5 9"/>',
+  up:'<path d="M5.5 15 12 8.5l6.5 6.5"/>',
+  down:'<path d="M5.5 9 12 15.5 18.5 9"/>',
   chart:'<path d="M4 19.5V4.5"/><path d="M4 19.5h16"/><path d="M7.5 15.5l3.5-4 3 2.5 4.5-6"/>',
   calendar:'<rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17"/><path d="M8 3.5v4M16 3.5v4"/>',
   download:'<path d="M12 4v11"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 19.5h15"/>',
@@ -1451,7 +1502,9 @@ function groupHead(scope, key, label, count, right) {
   const off = isCollapsed(scope, key);
   return `<button class="grouphd" data-act="fold" data-scope="${scope}" data-key="${esc(String(key))}"
       aria-expanded="${!off}" aria-label="${off ? 'Show' : 'Hide'} ${esc(label)}">
-      ${svg('car', 'car')}<span class="gh-ico">${svg(groupIcon(scope, key))}</span><h3>${esc(label)}</h3><span class="n">${count}</span><span class="rule"></span>${right || ''}
+      ${svg('car', 'car')}<span class="gh-ico">${svg(groupIcon(scope, key))}</span><h3>${esc(label)}</h3><span class="gh-meta">${right
+        ? `<span class="n">${count} ${count === 1 ? 'item' : 'items'}</span> ${right}`
+        : `<span class="n">${count}</span>`}</span>
     </button>`;
 }
 const filterCount = () => ui.filters.cats.size + ui.filters.stores.size + ui.filters.stock.size + (ui.filters.fav ? 1 : 0);
@@ -1966,9 +2019,10 @@ function viewCatalog() {
       </button>
     </div>
     ${nf ? activeFilterChips() : ''}
-    <div class="catcount">${items.length === S.products.length
+    <div class="catcount"><span>${items.length === S.products.length
       ? `${S.products.length} ${S.products.length === 1 ? 'product' : 'products'}, grouped by category`
-      : `Showing ${items.length} of ${S.products.length}`}</div>
+      : `Showing ${items.length} of ${S.products.length}`}</span>${activeCategories().length > 1
+      ? `<button class="linkbtn" data-act="arrange-cats">${svg('up', 'lk')}Reorder</button>` : ''}</div>
   </div>`;
 
   if (!items.length) {
@@ -2294,7 +2348,7 @@ function viewList() {
         : (k === '_none' ? 'Uncategorized' : catName(k));
       const sum = arr.reduce((a, it) => { const t = itemTotal(it); return t == null ? a : a + t; }, 0);
       h += `<div class="sec" style="margin-top:14px">
-        ${groupHead('list', ui.listGroup + ':' + k, label, arr.length, `<span class="n">${money(sum)}</span>`)}
+        ${groupHead('list', ui.listGroup + ':' + k, label, arr.length, `<span class="gh-sum num">${money(sum)}</span>`)}
         ${isCollapsed('list', ui.listGroup + ':' + k) ? '' : `<div class="card stack">${arr.map(listItemRow).join('')}</div>`}
       </div>`;
     }
@@ -2333,30 +2387,50 @@ function listItemRow(it) {
          <button data-act="qty" data-id="${it.id}" data-d="1" aria-label="Increase quantity">${svg('plus')}</button>
        </div>`;
 
-  return `<div class="li ${it.checked ? 'done' : ''}">
+  /* Closed, a row is just: tick box, name, one quiet line, price.
+     Tapping it opens the controls for that item — one item at a time. */
+  const open = ui.openItem === it.id;
+  const amount = it.unitType === 'weight'
+    ? `${numfmt(it.weight != null ? it.weight : 0)} ${esc(it.weightUnit || 'lb')}`
+    : `${numfmt(it.qty || 1)}`;
+  const priceTxt = unitPrice == null ? '' : `<span class="${isActual ? 'paid' : ''}">${money(unitPrice)}${perUnit}</span>`;
+  const how = unitPrice == null
+    ? `${it.unitType === 'weight' || (it.qty || 1) > 1 ? `<span class="num">${amount}</span><span class="sep">·</span>` : ''}<span class="warn">No price yet</span>`
+    : it.unitType === 'weight'
+      ? `<span class="num">${amount} × ${priceTxt}</span>`
+      : (it.qty || 1) > 1 ? `<span class="num">${amount} × ${priceTxt}</span>` : `<span class="num">${priceTxt}</span>`;
+  const where = ui.listGroup === 'category'
+    ? (it.storeId ? esc(storeName(it.storeId)) : '')
+    : (it.categoryId ? esc(catName(it.categoryId)) : '<span class="warn">No category</span>');
+
+  return `<div class="li ${it.checked ? 'done' : ''}${open ? ' open' : ''}" data-iid="${it.id}">
     <button class="check" role="checkbox" aria-checked="${it.checked}" data-act="check" data-id="${it.id}"
             aria-label="${it.checked ? 'Uncheck' : 'Check off'} ${esc(it.name)}"><span class="box">${svg('check')}</span></button>
     <div class="main">
-      <div class="top">
-        <div class="nm">${esc(it.name)}${p ? '' : ' <span class="pill">Removed</span>'}</div>
-        <div class="tot ${total == null ? 'missing' : ''}">${total == null ? 'No price' : money(total)}</div>
-      </div>
-      <div class="sub">
+      <button class="li-open" data-act="expand" data-id="${it.id}" aria-expanded="${open}" aria-controls="ed-${it.id}"
+              aria-label="${esc(it.name)} — ${open ? 'hide' : 'show'} quantity, price and store">
+        <span class="top">
+          <span class="nm">${esc(it.name)}${p ? '' : ' <span class="pill">Removed</span>'}</span>
+          <span class="tot num ${total == null ? 'missing' : ''}">${total == null ? '—' : money(total)}</span>
+        </span>
+        <span class="lmeta">${how}${where ? `<span class="sep">·</span><span class="wh">${where}</span>` : ''}${svg('chevdown', 'lcar')}</span>
+      </button>
+      ${open ? `<div class="li-edit" id="ed-${it.id}">
+        <div class="ctl">
+          ${control}
+          <button class="pricebtn ${priceCls}" data-act="price" data-id="${it.id}">${priceLabel}</button>
+        </div>
         <div class="subwrap">
           <button class="chipbtn catbtn${it.categoryId ? '' : ' unset'}" data-act="category" data-id="${it.id}"
             aria-label="${it.categoryId ? 'Category: ' + esc(catName(it.categoryId)) + ' — change it' : 'Set a category for ' + esc(it.name)}"
-            >${it.categoryId ? esc(catName(it.categoryId)) : 'Set category'}</button>
+            >${svg('tag')}${it.categoryId ? esc(catName(it.categoryId)) : 'Set category'}</button>
           <button class="chipbtn storebtn" data-act="store" data-id="${it.id}"
             aria-label="Store: ${esc(it.storeId ? storeName(it.storeId) : 'Unassigned')} — change it"
-            >${esc(it.storeId ? storeName(it.storeId) : 'Unassigned')}</button>
-          ${isActual && it.expectedPrice != null ? `<span class="mi"><span class="dot">·</span><span class="num">was ${money(it.expectedPrice)}${perUnit}</span></span>` : ''}
+            >${svg('store')}${esc(it.storeId ? storeName(it.storeId) : 'Choose store')}</button>
+          ${isActual && it.expectedPrice != null ? `<span class="mi num">was ${money(it.expectedPrice)}${perUnit}</span>` : ''}
         </div>
-        <button class="rm" data-act="remove" data-id="${it.id}" aria-label="Remove ${esc(it.name)} from list">${svg('x')}</button>
-      </div>
-      <div class="ctl">
-        ${control}
-        <button class="pricebtn ${priceCls}" data-act="price" data-id="${it.id}">${priceLabel}</button>
-      </div>
+        <button class="btn sm li-rm" data-act="remove" data-id="${it.id}" aria-label="Remove ${esc(it.name)} from list">${svg('trash')}Remove from list</button>
+      </div>` : ''}
     </div>
   </div>`;
 }
@@ -3171,6 +3245,39 @@ function sheetCategoryDetail(categoryId, mode) {
   showSheet(() => buildCategoryDetail(categoryId), { kind: 'cat', id: categoryId }, mode || 'push');
 }
 
+/* ---- arrange categories ----
+   The order of S.categories is the order used everywhere things are grouped:
+   catalog, shopping list, the add-items picker, the mark sheet and filters. */
+function moveCategory(id, d) {
+  const act = S.categories.filter(c => !c.archived);
+  const i = act.findIndex(c => c.id === id), j = i + d;
+  if (i < 0 || j < 0 || j >= act.length) return false;
+  [act[i], act[j]] = [act[j], act[i]];
+  S.categories = act.concat(S.categories.filter(c => c.archived));
+  S.categories.forEach((c, k) => { c.order = k; });
+  Persist.saveMeta('categories');
+  return true;
+}
+function buildArrange() {
+  const cats = activeCategories();
+  return sheetHead('Reorder categories', 'Sets the order in your catalog and shopping list') + `
+    <div class="sheet-bd">
+      <div class="card stack">
+        ${cats.map((c, i) => `<div class="row arrrow" data-cid="${c.id}">
+          <span class="gh-ico" aria-hidden="true">${svg(categoryStyle(c.id).icon)}</span>
+          <div class="body"><div class="name">${esc(c.name)}</div>
+            <div class="meta">${productsForCategory(c.id).length} ${productsForCategory(c.id).length === 1 ? 'product' : 'products'}</div></div>
+          <button class="iconbtn arr" data-act="cat-move" data-id="${c.id}" data-d="-1"${i === 0 ? ' disabled' : ''}
+            aria-label="Move ${esc(c.name)} up">${svg('up')}</button>
+          <button class="iconbtn arr" data-act="cat-move" data-id="${c.id}" data-d="1"${i === cats.length - 1 ? ' disabled' : ''}
+            aria-label="Move ${esc(c.name)} down">${svg('down')}</button>
+        </div>`).join('')}
+      </div>
+      <div class="hint" style="margin-top:12px">Changes save straight away. Uncategorized items always come last.</div>
+    </div>
+    <div class="sheet-ft"><button class="btn primary" data-act="close">Done</button></div>`;
+}
+
 /* ---- settings ---- */
 function settingsRow(kind, rec) {
   const n = kind === 'store' ? productsForStore(rec.id).length : productsForCategory(rec.id).length;
@@ -3258,7 +3365,8 @@ function buildSettings() {
       </div>
 
       <div class="sec" style="margin-top:20px">
-        <div class="sec-head"><span class="lab-ico">${svg('tag')}</span><h2>Categories</h2><span class="count num">${activeCategories().length}</span></div>
+        <div class="sec-head"><span class="lab-ico">${svg('tag')}</span><h2>Categories</h2><span class="count num">${activeCategories().length}</span>${activeCategories().length > 1
+          ? `<span class="spacer"></span><button class="linkbtn" data-act="arrange-cats">Reorder</button>` : ''}</div>
         ${activeCategories().length
           ? `<div class="card stack">${activeCategories().map(c => settingsRow('cat', c)).join('')}</div>`
           : `<div class="empty">No categories yet.</div>`}
@@ -3934,6 +4042,7 @@ function handleClick(e) {
       const goingIn = !it.checked;
       it.checked = !it.checked;
       it.checkedAt = it.checked ? todayISO() : null;
+      if (ui.openItem === id) ui.openItem = null;
       if (it.checked) ui.showDone = false;
       Persist.saveActive();
       /* show the completed state, let the row fade out, then move it into
@@ -3957,8 +4066,26 @@ function handleClick(e) {
       if (next < 1) { removeListItem(id); toast(it.name + ' removed'); render(); return; }
       it.qty = next; Persist.saveActive(); render(); return;
     }
+    case 'expand': {
+      ui.openItem = ui.openItem === id ? null : id;
+      render();
+      return;
+    }
+    case 'arrange-cats': commitTaxField(); showSheet(buildArrange, { kind: 'arrange' }, sheetIsOpen() ? 'push' : 'root'); return;
+    case 'cat-move': {
+      const d = Number(el.dataset.d);
+      if (!moveCategory(id, d)) return;
+      renderSheets(); render();
+      /* keep focus on the category being moved, so it can be nudged again */
+      const again = document.querySelector(`.scrim:last-child [data-act="cat-move"][data-id="${id}"][data-d="${d}"]`);
+      const other = document.querySelector(`.scrim:last-child [data-act="cat-move"][data-id="${id}"][data-d="${-d}"]`);
+      (again && !again.disabled ? again : other)?.focus();
+      document.querySelector(`.scrim:last-child .arrrow[data-cid="${id}"]`)?.classList.add('flash');
+      return;
+    }
     case 'remove': {
       const it = findItem(id); if (!it) return;
+      if (ui.openItem === id) ui.openItem = null;
       removeListItem(id); toast(it.name + ' removed'); render(); return;
     }
     case 'price': sheetPrice(id); return;
