@@ -508,6 +508,7 @@ nav.tabs .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding-
 }
 .bar .miss svg{width:13px;height:13px;flex:0 0 13px}
 .bar .fin{grid-column:1/-1;margin-top:9px}
+.bar .figs{display:contents}
 
 /* ---------- sheet ---------- */
 .scrim{
@@ -676,7 +677,7 @@ body{font-size:16px;line-height:1.5}
 .row .price{font-size:16px;font-weight:650;color:var(--ink)}
 .row.tappable{transition:background .12s ease}
 .row.tappable:active,.grouphd:active,.tripcard:active,.repeat-card:active{background:var(--surface-3)}
-.prow .body{display:flex;align-items:center;gap:12px}
+.prow .pbody{display:flex;align-items:center;gap:12px}
 .prow .ptext{flex:1;min-width:0;display:block}
 
 /* ---- product thumbnails ---- */
@@ -687,7 +688,7 @@ body{font-size:16px;line-height:1.5}
 .thumb img.in{opacity:1}
 .thumb.sm{width:44px;height:44px;flex-basis:44px;border-radius:12px}
 .thumb.md{width:48px;height:48px;flex-basis:48px;border-radius:13px;margin-right:2px}
-@media (max-width:359px){ .thumb{width:44px;height:44px;flex-basis:44px;border-radius:12px} .prow .body{gap:10px} }
+@media (max-width:359px){ .thumb{width:44px;height:44px;flex-basis:44px;border-radius:12px} .prow .pbody{gap:10px} }
 @media (prefers-reduced-motion:reduce){ .thumb img{transition:none} }
 
 /* ---- pills: compact, never colour alone ---- */
@@ -897,11 +898,18 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
 .li.done .li-open .tot{color:var(--ink-3)}
 @media (prefers-reduced-motion:reduce){ .li-edit{animation:none} .lmeta .lcar{transition:none} }
 
-/* ============ WIDE SCREENS (iPad, laptop) — phones never reach these ============ */
+/* ============ LARGE SCREENS (iPad, laptop, desktop) — phones never reach these ============
+   One page frame for every screen: content starts right beside the rail and
+   grows only as wide as that screen needs (--page-w). Titles, content and the
+   totals bar all sit on that same frame, so spare width becomes calm space on
+   the right instead of stretched cards.
+     740–1023   tablet portrait: single column, stacked
+     1024+      left-dominant layouts: Home ~62/38, List ~70/30, Catalog 2 columns
+                (3 only when every card stays wide), History a readable column   */
 @media (min-width:740px){
-  :root{--rail:96px}
-  body{padding-left:var(--rail)}
-  .wrap{max-width:1180px;padding-inline:clamp(20px,3vw,32px)}
+  :root{--rail:96px;--pad:28px;--gap-x:24px}
+  body{padding-left:var(--rail);--page-w:820px}
+  .wrap{max-width:var(--page-w);margin-left:0;margin-right:auto;padding-inline:var(--pad)}
   /* bottom tabs become a side rail */
   nav.tabs{top:0;right:auto;width:var(--rail);border-top:none;border-right:1px solid var(--line);
     padding-bottom:0;padding-top:env(safe-area-inset-top,0px)}
@@ -910,27 +918,46 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
   .tab .badge{top:8px;right:16px;transform:none}
   .bar{left:var(--rail)}
   .toast{bottom:calc(24px + var(--bar-h,0px))}
-  /* Home: summary and quick actions on the left, Still Needed and Running Low on the right */
-  .home-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 var(--gap-4);align-items:start}
-  /* Catalog: category groups flow into columns */
-  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,284px),1fr));gap:0 var(--gap-3);align-items:start}
-  .narrow{max-width:760px;margin-inline:auto}
-  /* History is a single column: centre it, and centre its header with it */
-  body[data-view="history"] #screen,body[data-view="history"] .appbar .wrap{max-width:calc(760px + 2 * clamp(20px,3vw,32px))}
-  /* totals: four figures across, Finish Trip beneath */
-  .bar .grid{grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;gap:6px 20px}
-  .bar .cell.big{grid-column:auto!important}
-  .bar .miss{grid-column:1/-1}
-  /* sheets open as centred dialogs rather than rising from the bottom */
+  /* tablet portrait: Home stacks — Current List, Mark items, Still Needed, Running Low */
+  .home-grid{display:block}
+  /* tablet portrait: one readable catalog column */
+  .groups{display:grid;grid-template-columns:minmax(0,1fr);gap:0 20px;align-items:start}
+  .narrow{max-width:none;margin:0}
+  /* totals: the supporting figures in a row, Expected Total beneath them as the
+     strongest number, Finish Trip to the right; labels never wrap */
+  .bar .grid{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px}
+  .bar .figs{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 24px;flex:1 1 0;min-width:0}
+  .bar .cell{flex:0 0 auto}
+  .bar .cell.big{flex:1 0 100%;grid-column:auto!important}
+  .bar .cell .k{white-space:nowrap}
+  .bar .miss{order:10;flex:1 0 100%}
+  .bar .fin{flex:0 0 auto;margin:0;min-width:160px}
+  .bar .grid{container-type:inline-size}
+  /* too narrow for the figures and the button side by side: button goes underneath */
+  @container (max-width:680px){ .bar .fin{flex:1 0 100%;order:9} }
+  /* sheets open as dialogs rather than rising from the bottom */
   .scrim{align-items:center;padding:24px}
   .sheet{border-radius:20px;max-height:min(86vh,820px)}
 }
-@media (min-width:1000px){
-  /* totals and Finish Trip in a single row */
-  .bar .grid{grid-template-columns:repeat(4,minmax(0,1fr)) minmax(180px,auto)}
-  .bar .fin{grid-column:-2/-1;grid-row:1;margin-top:0;align-self:center}
-  /* Shopping List with the catalog beside it */
-  .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,390px);gap:var(--gap-4);align-items:start}
+@media (min-width:1024px){
+  body[data-view="home"]{--page-w:1180px}
+  body[data-view="list"]{--page-w:1280px}
+  /* ~78% of the workspace, never narrower than two comfortable columns */
+  body[data-view="catalog"]{--page-w:clamp(920px,78%,1520px)}
+  body[data-view="history"]{--page-w:860px}
+
+  /* Home: Current List owns the left; Still Needed + Running Low support on the right */
+  .home-grid{display:grid;grid-template-columns:minmax(0,62fr) minmax(300px,38fr);gap:0 var(--gap-x);align-items:start}
+
+  /* Catalog: columns come from a minimum card width, so a third appears only on
+     very wide screens where every card is still roomy — never more than three */
+  .groups{grid-template-columns:repeat(auto-fill,minmax(400px,1fr))}
+  /* search, Filter and Reorder stay together as one toolbar */
+  body[data-view="catalog"] .toolbar,body[data-view="catalog"] .catcount,body[data-view="catalog"] .afchips{max-width:760px}
+  body[data-view="catalog"] .catcount{margin-right:0;max-width:758px}
+
+  /* Shopping List ~70/30: the list owns the page, Add from Catalog is a utility panel */
+  .split{display:grid;grid-template-columns:minmax(0,1fr) clamp(280px,30%,360px);gap:var(--gap-x);align-items:start}
   .split .addmore{display:none}
   /* both columns start on the same line */
   .split{margin-top:14px}
@@ -952,6 +979,13 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
   .panel-title svg{width:17px;height:17px;color:var(--accent)}
   .panel-bd{overflow-y:auto;overscroll-behavior:contain;padding:2px 12px 14px;flex:1}
   .panel-bd .card{background:var(--surface-3)}
+
+  /* totals sit under the list they add up, not under the catalog panel */
+  .bar .grid{max-width:var(--list-w,none)}
+
+  /* Settings, product and store editors open on the left, where the work is */
+  .scrim{justify-content:flex-start;align-items:flex-start;padding:24px 24px 24px calc(var(--rail) + var(--pad))}
+  .sheet{max-width:600px;max-height:calc(100vh - 48px)}
 }
 @media (min-width:740px) and (prefers-reduced-motion:reduce){ .sheet{animation:none} }
 
@@ -1809,9 +1843,9 @@ function listToggleBtn(p) {
 }
 
 /* Wide layouts: 740px+ gets a side rail and roomier grids (iPad portrait and up);
-   1000px+ puts the catalog beside the shopping list. Phones never match either. */
+   1024px+ puts the catalog beside the shopping list. Phones never match either. */
 const mq = q => (window.matchMedia ? window.matchMedia(q) : { matches: false, addEventListener() {} });
-const MQ_RAIL = mq('(min-width: 740px)'), MQ_SPLIT = mq('(min-width: 1000px)');
+const MQ_RAIL = mq('(min-width: 740px)'), MQ_SPLIT = mq('(min-width: 1024px)');
 const isRail = () => MQ_RAIL.matches;
 const isSplit = () => MQ_SPLIT.matches;
 const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -2278,7 +2312,7 @@ function catalogRow(p) {
   const unit = p.unitType === 'weight' ? '/' + (p.weightUnit || 'lb') : '';
   const qty = p.unitType === 'weight' ? numfmt(p.defaultWeight || 1) + ' ' + (p.weightUnit || 'lb') : '×' + numfmt(p.defaultQty || 1);
   return `<div class="row tappable prow" data-pid="${p.id}">
-    <button class="body" data-act="open-product" data-id="${p.id}" style="min-height:46px">
+    <button class="body pbody" data-act="open-product" data-id="${p.id}" style="min-height:46px">
       ${productThumb(p)}
       <span class="ptext">
       <div class="name">${esc(p.name)}</div>
@@ -2462,7 +2496,7 @@ function renderBar() {
     ? `<div class="miss">${svg('alert')}${t.missing} ${t.missing === 1 ? 'item has' : 'items have'} no price — estimate is incomplete</div>` : '';
 
   host.innerHTML = `<div class="bar"><div class="wrap">
-    <div class="grid">
+    <div class="grid"><div class="figs">
       ${shopping ? `
         <div class="cell"><div class="k">Purchased so far</div><div class="v num">${money(t.purchased)}</div></div>
         <div class="cell"><div class="k">Remaining expected</div><div class="v num">${money(t.remaining)}</div></div>
@@ -2472,7 +2506,7 @@ function renderBar() {
         <div class="cell"><div class="k">Expected subtotal</div><div class="v num">${money(t.subtotal)}</div></div>
         <div class="cell"><div class="k">Est. sales tax (${numfmt(S.settings.taxRate)}%)</div><div class="v num">${money(t.tax)}</div></div>
         <div class="cell big acc" style="grid-column:1/-1"><div class="k">Expected total</div><div class="v num">${money(t.total)}</div></div>
-      `}
+      `}</div>
       ${missNote}
       ${shopping ? `<div class="fin"><button class="btn primary block" data-act="finish">${svg('check')}Finish Trip</button></div>` : ''}
     </div>
@@ -2491,6 +2525,10 @@ function measureChrome() {
   if (nav) r.style.setProperty('--nav-h', railed ? '0px' : Math.ceil(nav.offsetHeight) + 'px');
   const ab = document.querySelector('.appbar');
   if (ab) r.style.setProperty('--appbar-h', Math.ceil(ab.offsetHeight) + 'px');
+  /* the totals bar lines up with the list column when the catalog sits beside it */
+  const sm = isSplit() ? document.querySelector('.split > .split-main') : null;
+  if (sm) r.style.setProperty('--list-w', Math.round(sm.getBoundingClientRect().width) + 'px');
+  else r.style.removeProperty('--list-w');
   if (bar) {
     const navH = nav && !railed ? nav.offsetHeight : 0;
     r.style.setProperty('--bar-h', Math.ceil(bar.offsetHeight - navH) + 'px');
