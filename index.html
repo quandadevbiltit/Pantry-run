@@ -508,7 +508,6 @@ nav.tabs .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding-
 }
 .bar .miss svg{width:13px;height:13px;flex:0 0 13px}
 .bar .fin{grid-column:1/-1;margin-top:9px}
-.bar .figs{display:contents}
 
 /* ---------- sheet ---------- */
 .scrim{
@@ -898,18 +897,32 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
 .li.done .li-open .tot{color:var(--ink-3)}
 @media (prefers-reduced-motion:reduce){ .li-edit{animation:none} .lmeta .lcar{transition:none} }
 
-/* ============ LARGE SCREENS (iPad, laptop, desktop) — phones never reach these ============
-   One page frame for every screen: content starts right beside the rail and
-   grows only as wide as that screen needs (--page-w). Titles, content and the
-   totals bar all sit on that same frame, so spare width becomes calm space on
-   the right instead of stretched cards.
-     740–1023   tablet portrait: single column, stacked
-     1024+      left-dominant layouts: Home ~62/38, List ~70/30, Catalog 2 columns
-                (3 only when every card stays wide), History a readable column   */
+
+/* ---- spreadsheet import ---- */
+.istats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:420px){ .istats{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.istat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.istat .v{font-size:22px;font-weight:750;color:var(--ink);line-height:1.1}
+.istat .k{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.istat.on{background:var(--accent-soft);border-color:var(--accent-line)}
+.istat.on .v{color:var(--accent-deep)}
+.istat.warn{background:var(--warn-soft);border-color:var(--warn-line)}
+.istat.warn .v{color:var(--warn)}
+.ilist{padding:4px 14px 10px}
+.irow{display:flex;flex-wrap:wrap;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--divider);font-size:14px;line-height:1.4}
+.irow:last-child{border-bottom:none}
+.irow b{font-weight:650;color:var(--ink)}
+.irow span{color:var(--ink-2);overflow-wrap:anywhere;min-width:0}
+.irow.muted{color:var(--ink-3)}
+.linkbtn.inline{display:inline-flex;min-height:44px;padding:0 2px;vertical-align:middle;font-size:inherit}
+.sheet-ico{width:36px;height:36px;flex:0 0 36px;border-radius:11px}
+.sheet-ico svg{width:18px;height:18px}
+.sheet-ft [data-act="import-confirm"]{white-space:nowrap}
+/* ============ WIDE SCREENS (iPad, laptop) — phones never reach these ============ */
 @media (min-width:740px){
-  :root{--rail:96px;--pad:28px;--gap-x:24px}
-  body{padding-left:var(--rail);--page-w:820px}
-  .wrap{max-width:var(--page-w);margin-left:0;margin-right:auto;padding-inline:var(--pad)}
+  :root{--rail:96px}
+  body{padding-left:var(--rail)}
+  .wrap{max-width:1180px;padding-inline:clamp(20px,3vw,32px)}
   /* bottom tabs become a side rail */
   nav.tabs{top:0;right:auto;width:var(--rail);border-top:none;border-right:1px solid var(--line);
     padding-bottom:0;padding-top:env(safe-area-inset-top,0px)}
@@ -918,46 +931,27 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
   .tab .badge{top:8px;right:16px;transform:none}
   .bar{left:var(--rail)}
   .toast{bottom:calc(24px + var(--bar-h,0px))}
-  /* tablet portrait: Home stacks — Current List, Mark items, Still Needed, Running Low */
-  .home-grid{display:block}
-  /* tablet portrait: one readable catalog column */
-  .groups{display:grid;grid-template-columns:minmax(0,1fr);gap:0 20px;align-items:start}
-  .narrow{max-width:none;margin:0}
-  /* totals: the supporting figures in a row, Expected Total beneath them as the
-     strongest number, Finish Trip to the right; labels never wrap */
-  .bar .grid{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px}
-  .bar .figs{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 24px;flex:1 1 0;min-width:0}
-  .bar .cell{flex:0 0 auto}
-  .bar .cell.big{flex:1 0 100%;grid-column:auto!important}
-  .bar .cell .k{white-space:nowrap}
-  .bar .miss{order:10;flex:1 0 100%}
-  .bar .fin{flex:0 0 auto;margin:0;min-width:160px}
-  .bar .grid{container-type:inline-size}
-  /* too narrow for the figures and the button side by side: button goes underneath */
-  @container (max-width:680px){ .bar .fin{flex:1 0 100%;order:9} }
-  /* sheets open as dialogs rather than rising from the bottom */
+  /* Home: summary and quick actions on the left, Still Needed and Running Low on the right */
+  .home-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 var(--gap-4);align-items:start}
+  /* Catalog: category groups flow into columns */
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,284px),1fr));gap:0 var(--gap-3);align-items:start}
+  .narrow{max-width:760px;margin-inline:auto}
+  /* History is a single column: centre it, and centre its header with it */
+  body[data-view="history"] #screen,body[data-view="history"] .appbar .wrap{max-width:calc(760px + 2 * clamp(20px,3vw,32px))}
+  /* totals: four figures across, Finish Trip beneath */
+  .bar .grid{grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;gap:6px 20px}
+  .bar .cell.big{grid-column:auto!important}
+  .bar .miss{grid-column:1/-1}
+  /* sheets open as centred dialogs rather than rising from the bottom */
   .scrim{align-items:center;padding:24px}
   .sheet{border-radius:20px;max-height:min(86vh,820px)}
 }
-@media (min-width:1024px){
-  body[data-view="home"]{--page-w:1180px}
-  body[data-view="list"]{--page-w:1280px}
-  /* ~78% of the workspace, never narrower than two comfortable columns */
-  body[data-view="catalog"]{--page-w:clamp(920px,78%,1520px)}
-  body[data-view="history"]{--page-w:860px}
-
-  /* Home: Current List owns the left; Still Needed + Running Low support on the right */
-  .home-grid{display:grid;grid-template-columns:minmax(0,62fr) minmax(300px,38fr);gap:0 var(--gap-x);align-items:start}
-
-  /* Catalog: columns come from a minimum card width, so a third appears only on
-     very wide screens where every card is still roomy — never more than three */
-  .groups{grid-template-columns:repeat(auto-fill,minmax(400px,1fr))}
-  /* search, Filter and Reorder stay together as one toolbar */
-  body[data-view="catalog"] .toolbar,body[data-view="catalog"] .catcount,body[data-view="catalog"] .afchips{max-width:760px}
-  body[data-view="catalog"] .catcount{margin-right:0;max-width:758px}
-
-  /* Shopping List ~70/30: the list owns the page, Add from Catalog is a utility panel */
-  .split{display:grid;grid-template-columns:minmax(0,1fr) clamp(280px,30%,360px);gap:var(--gap-x);align-items:start}
+@media (min-width:1000px){
+  /* totals and Finish Trip in a single row */
+  .bar .grid{grid-template-columns:repeat(4,minmax(0,1fr)) minmax(180px,auto)}
+  .bar .fin{grid-column:-2/-1;grid-row:1;margin-top:0;align-self:center}
+  /* Shopping List with the catalog beside it */
+  .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,390px);gap:var(--gap-4);align-items:start}
   .split .addmore{display:none}
   /* both columns start on the same line */
   .split{margin-top:14px}
@@ -979,13 +973,6 @@ nav.tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top
   .panel-title svg{width:17px;height:17px;color:var(--accent)}
   .panel-bd{overflow-y:auto;overscroll-behavior:contain;padding:2px 12px 14px;flex:1}
   .panel-bd .card{background:var(--surface-3)}
-
-  /* totals sit under the list they add up, not under the catalog panel */
-  .bar .grid{max-width:var(--list-w,none)}
-
-  /* Settings, product and store editors open on the left, where the work is */
-  .scrim{justify-content:flex-start;align-items:flex-start;padding:24px 24px 24px calc(var(--rail) + var(--pad))}
-  .sheet{max-width:600px;max-height:calc(100vh - 48px)}
 }
 @media (min-width:740px) and (prefers-reduced-motion:reduce){ .sheet{animation:none} }
 
@@ -1843,9 +1830,9 @@ function listToggleBtn(p) {
 }
 
 /* Wide layouts: 740px+ gets a side rail and roomier grids (iPad portrait and up);
-   1024px+ puts the catalog beside the shopping list. Phones never match either. */
+   1000px+ puts the catalog beside the shopping list. Phones never match either. */
 const mq = q => (window.matchMedia ? window.matchMedia(q) : { matches: false, addEventListener() {} });
-const MQ_RAIL = mq('(min-width: 740px)'), MQ_SPLIT = mq('(min-width: 1024px)');
+const MQ_RAIL = mq('(min-width: 740px)'), MQ_SPLIT = mq('(min-width: 1000px)');
 const isRail = () => MQ_RAIL.matches;
 const isSplit = () => MQ_SPLIT.matches;
 const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -2039,7 +2026,8 @@ function viewCatalog() {
       ${illus('generic', 'es')}
       <strong>Your catalog is empty</strong>
       Add the groceries and household products you buy regularly — then build lists from them in a couple of taps.
-      <div class="btnrow" style="max-width:240px;margin-inline:auto"><button class="btn primary" data-act="new-product">${svg('plus')}Add a product</button></div>
+      <div class="btnrow" style="max-width:280px;margin-inline:auto;flex-direction:column"><button class="btn primary block" data-act="new-product">${svg('plus')}Add a product</button>
+        <button class="btn block" data-act="sheet-import">${svg('upload')}Import a spreadsheet</button></div>
     </div></div>`;
   }
   const items = catalogMatches();
@@ -2496,7 +2484,7 @@ function renderBar() {
     ? `<div class="miss">${svg('alert')}${t.missing} ${t.missing === 1 ? 'item has' : 'items have'} no price — estimate is incomplete</div>` : '';
 
   host.innerHTML = `<div class="bar"><div class="wrap">
-    <div class="grid"><div class="figs">
+    <div class="grid">
       ${shopping ? `
         <div class="cell"><div class="k">Purchased so far</div><div class="v num">${money(t.purchased)}</div></div>
         <div class="cell"><div class="k">Remaining expected</div><div class="v num">${money(t.remaining)}</div></div>
@@ -2506,7 +2494,7 @@ function renderBar() {
         <div class="cell"><div class="k">Expected subtotal</div><div class="v num">${money(t.subtotal)}</div></div>
         <div class="cell"><div class="k">Est. sales tax (${numfmt(S.settings.taxRate)}%)</div><div class="v num">${money(t.tax)}</div></div>
         <div class="cell big acc" style="grid-column:1/-1"><div class="k">Expected total</div><div class="v num">${money(t.total)}</div></div>
-      `}</div>
+      `}
       ${missNote}
       ${shopping ? `<div class="fin"><button class="btn primary block" data-act="finish">${svg('check')}Finish Trip</button></div>` : ''}
     </div>
@@ -2525,10 +2513,6 @@ function measureChrome() {
   if (nav) r.style.setProperty('--nav-h', railed ? '0px' : Math.ceil(nav.offsetHeight) + 'px');
   const ab = document.querySelector('.appbar');
   if (ab) r.style.setProperty('--appbar-h', Math.ceil(ab.offsetHeight) + 'px');
-  /* the totals bar lines up with the list column when the catalog sits beside it */
-  const sm = isSplit() ? document.querySelector('.split > .split-main') : null;
-  if (sm) r.style.setProperty('--list-w', Math.round(sm.getBoundingClientRect().width) + 'px');
-  else r.style.removeProperty('--list-w');
   if (bar) {
     const navH = nav && !railed ? nav.offsetHeight : 0;
     r.style.setProperty('--bar-h', Math.ceil(bar.offsetHeight - navH) + 'px');
@@ -3560,8 +3544,8 @@ async function runLimited(tasks, n) {
   const worker = async () => { while (i < tasks.length) { const t = tasks[i++]; await t(); } };
   await Promise.all(Array.from({ length: Math.min(n, tasks.length) }, worker));
 }
-async function saveSafety(data, backupDate) {
-  const head = { createdAt: new Date().toISOString(), counts: dataCounts(data), backupDate: backupDate || null };
+async function saveSafety(data, backupDate, kind) {
+  const head = { createdAt: new Date().toISOString(), counts: dataCounts(data), backupDate: backupDate || null, kind: kind || 'restore' };
   const text = JSON.stringify(data);
   if (backend === 'db') {
     const parts = Math.max(1, Math.ceil(text.length / SAFETY_CHUNK));
@@ -3758,7 +3742,7 @@ function compareRows(now, next) {
     return `<tr${diff ? ' class="diff"' : ''}><th scope="row">${label}</th><td>${esc(String(a))}</td><td>${esc(String(b))}</td></tr>`;
   };
   return `<table class="cmp num">
-    <thead><tr><th></th><th scope="col">Now</th><th scope="col">${pendingRestore && pendingRestore.source === 'undo' ? 'Before restore' : 'Backup'}</th></tr></thead>
+    <thead><tr><th></th><th scope="col">Now</th><th scope="col">${pendingRestore && pendingRestore.source === 'undo' ? 'Before ' + (pendingRestore.word || 'restore') : 'Backup'}</th></tr></thead>
     <tbody>
       ${row('Products', now.products, next.products)}
       ${row('Running low', now.low, next.low)}
@@ -3781,11 +3765,12 @@ function buildRestorePreview() {
   const undo = pr.source === 'undo';
   const now = dataCounts(currentData()), next = dataCounts(pr.data);
   const when = pr.meta.createdAt;
-  const sub = undo ? 'Your data from before the restore'
+  const w = pr.word || 'restore';
+  const sub = undo ? 'Your data from before the ' + w
     : when ? 'Backup from ' + new Date(when).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
     : 'Backup file (no date)';
   const empty = !next.products && !next.trips && !next.listItems;
-  return sheetHead(undo ? 'Undo the restore?' : 'Restore this backup?', sub) + `
+  return sheetHead(undo ? 'Undo the ' + w + '?' : 'Restore this backup?', sub) + `
     <div class="sheet-bd">
       ${compareRows(now, next)}
       ${empty ? `<div class="restore-err" role="alert">This ${undo ? 'copy' : 'backup'} has no products, trips or list — restoring it leaves the app empty.</div>` : ''}
@@ -3794,7 +3779,7 @@ function buildRestorePreview() {
       </ul>
       <ul class="impact keep" style="margin-top:8px">
         ${undo
-          ? `<li>This puts back exactly what you had before the restore.</li>`
+          ? `<li>This puts back exactly what you had before the ${w}.</li>`
           : `<li><b>A safety copy</b> of what you have now is kept first, so you can <b>Undo restore</b> from Settings.</li>`}
       </ul>
     </div>
@@ -3810,10 +3795,10 @@ function buildBusy(title) {
 function buildRestoreDone() {
   const r = ui.restoreResult || {};
   const ok = r.ok;
-  return sheetHead(ok ? (r.undo ? 'Restore undone' : 'Backup restored') : 'Restore didn’t finish') + `
+  return sheetHead(ok ? (r.undo ? (r.word === 'import' ? 'Import undone' : 'Restore undone') : 'Backup restored') : 'Restore didn’t finish') + `
     <div class="sheet-bd">
       ${ok
-        ? `<div class="sec-note" style="margin:0">${r.undo ? 'Your data is back to how it was before the restore.'
+        ? `<div class="sec-note" style="margin:0">${r.undo ? 'Your data is back to how it was before the ' + (r.word || 'restore') + '.'
             : 'Your data now matches the backup' + (r.when ? ' from ' + esc(fmtDate(r.when, true)) : '') + '.'}</div>
            <div class="card" style="padding:4px 14px;margin-top:12px">
              <div class="kv"><span class="k">Products</span><span class="v">${S.products.length}</span></div>
@@ -3851,7 +3836,7 @@ async function runRestore() {
   try {
     await replaceAllData(pr.data);
     if (undo) await clearSafety().catch(() => {});
-    ui.restoreResult = { ok: true, undo, when: pr.meta.createdAt };
+    ui.restoreResult = { ok: true, undo, when: pr.meta.createdAt, word: pr.word || 'restore' };
   } catch (e) {
     console.error(e);
     ui.restoreResult = { ok: false, undo, message: undo
@@ -3884,7 +3869,7 @@ async function startUndo() {
   if (!data) { toast('The safety copy couldn’t be read'); return; }
   const r = parseBackup(JSON.stringify({ app: BACKUP_APP, version: BACKUP_VERSION, data }));
   if (!r.ok) { toast('The safety copy couldn’t be read'); return; }
-  pendingRestore = { data: r.data, meta: { createdAt: safetyHead.createdAt }, source: 'undo' };
+  pendingRestore = { data: r.data, meta: { createdAt: safetyHead.createdAt }, source: 'undo', word: safetyHead.kind === 'import' ? 'import' : 'restore' };
   showSheet(buildRestorePreview, { kind: 'restore-preview' }, sheetIsOpen() ? 'push' : 'root');
 }
 
@@ -3897,11 +3882,657 @@ function backupSection() {
       <button class="btn" data-act="backup-open" style="flex:1">${svg('download')}Back up now</button>
       <button class="btn" data-act="restore-open" style="flex:1">${svg('upload')}Restore…</button>
     </div>
+    ${sheetSection()}
     ${u ? `<div class="card undo-card">
-      <div style="flex:1;min-width:0"><div class="name">Undo last restore</div>
-      <div class="meta">Restored ${esc(fmtDate(u.createdAt))} · puts back ${u.counts ? u.counts.products : 0} products and ${u.counts ? u.counts.trips : 0} trips</div></div>
+      <div style="flex:1;min-width:0"><div class="name">Undo last ${u.kind === 'import' ? 'import' : 'restore'}</div>
+      <div class="meta">${u.kind === 'import' ? 'Imported' : 'Restored'} ${esc(fmtDate(u.createdAt))} · puts back ${u.counts ? u.counts.products : 0} products and ${u.counts ? u.counts.trips : 0} trips</div></div>
       <button class="btn" data-act="restore-undo" style="flex:0 0 auto">Undo</button>
     </div>` : ''}
+  </div>`;
+}
+
+/* ============================================================
+   SPREADSHEET IMPORT / EXPORT
+   The catalog goes out as an Excel (.xlsx) or CSV file anyone can edit in
+   Excel, Numbers or Google Sheets, and comes back in the same shape.
+   Importing only ever touches products, stores and categories: a row whose
+   name matches a product updates it, any other row adds a new product, and a
+   blank cell leaves that detail as it was. Nothing is saved until the viewer
+   has seen a preview, and a safety copy is kept so the import can be undone.
+   ============================================================ */
+const SHEET_COLS = [
+  ['name', 'Product name', ['product name', 'product', 'name', 'item', 'item name', 'product title']],
+  ['category', 'Category', ['category', 'categories', 'aisle', 'section', 'department']],
+  ['store', 'Preferred store', ['preferred store', 'store', 'shop', 'where', 'supermarket']],
+  ['price', 'Usual price', ['usual price', 'price', 'cost', 'unit price', 'regular price']],
+  ['pricedBy', 'Priced by', ['priced by', 'unit', 'units', 'unit type', 'sold by', 'per', 'price per']],
+  ['amount', 'Default amount', ['default amount', 'default quantity', 'quantity', 'qty', 'amount', 'default weight', 'weight', 'how many']],
+  ['pkg', 'Package size', ['package size', 'package', 'size', 'pack size', 'pack']],
+  ['stock', 'Stock', ['stock', 'stock status', 'status', 'in stock']],
+  ['fav', 'Favourite', ['favourite', 'favorite', 'fav', 'starred', 'favourites', 'favorites']],
+  ['notes', 'Notes', ['notes', 'note', 'comments', 'comment']]
+];
+const SHEET_MAX_ROWS = 5000;
+const STOCK_WORD = { in: 'In stock', low: 'Running low', need: 'Need to buy' };
+const sheetNorm = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const nameKey = s => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+/* ---------- export ---------- */
+function sheetRows() {
+  const order = S.categories.map(c => c.id);
+  const prods = S.products.slice().sort((a, b) => {
+    const ca = a.categoryId ? order.indexOf(a.categoryId) : 1e6, cb = b.categoryId ? order.indexOf(b.categoryId) : 1e6;
+    return ca - cb || a.name.localeCompare(b.name);
+  });
+  return prods.map(p => {
+    const w = p.unitType === 'weight';
+    return [
+      p.name,
+      p.categoryId ? catName(p.categoryId) : '',
+      p.preferredStoreId ? storeName(p.preferredStoreId) : '',
+      p.usualPrice != null && isFinite(p.usualPrice) ? Number(p.usualPrice) : '',
+      w ? (p.weightUnit || 'lb') : 'each',
+      w ? Number(p.defaultWeight || 1) : Number(p.defaultQty || 1),
+      p.packageSize || '',
+      STOCK_WORD[p.stock] || STOCK_WORD.in,
+      p.favourite ? 'Yes' : '',
+      p.notes || ''
+    ];
+  });
+}
+const SHEET_HELP = [
+  'How to use this spreadsheet with Pantry Run',
+  '',
+  'One row per product. Edit, add or delete rows, then import the file in Pantry Run: Settings, Backup & restore, Spreadsheet, Import.',
+  'A row whose Product name matches a product you already have updates that product. Any other row adds a new product.',
+  'A blank cell leaves that detail as it is, so you only need to fill in what you want to change.',
+  'Deleting a row here never deletes the product from Pantry Run.',
+  '',
+  'Priced by: each, lb or kg.',
+  'Default amount: how many (for "each") or the usual weight (for lb and kg).',
+  'Stock: In stock, Running low or Need to buy.',
+  'Favourite: Yes or No.',
+  'Category and Preferred store: use your existing names; new names are created for you.',
+  '',
+  'Your shopping list, trip history and price history are never changed by an import, and you can undo an import from Settings.'
+];
+
+function csvCell(v) {
+  const s = String(v == null ? '' : v);
+  return /[",\r\n]|^\s|\s$/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function makeCsv() {
+  const lines = [SHEET_COLS.map(c => c[1])].concat(sheetRows()).map(r => r.map(csvCell).join(','));
+  return '﻿' + lines.join('\r\n') + '\r\n';   /* BOM so Excel reads accents correctly */
+}
+
+/* a minimal but complete .xlsx: two sheets, bold frozen header, dropdowns */
+const XML_ESC = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+const colLetter = i => { let s = ''; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+function xlsxSheetXml(rows, opts) {
+  const cell = (v, r, c, style) => {
+    const ref = colLetter(c) + (r + 1);
+    if (typeof v === 'number' && isFinite(v)) return `<c r="${ref}"${style ? ` s="${style}"` : ''}><v>${v}</v></c>`;
+    if (v === '' || v == null) return '';
+    return `<c r="${ref}" t="inlineStr"${style ? ` s="${style}"` : ''}><is><t xml:space="preserve">${XML_ESC(v)}</t></is></c>`;
+  };
+  const data = rows.map((row, r) => `<row r="${r + 1}">${row.map((v, c) => cell(v, r, c, r === 0 && opts.header ? 1 : (opts.money && opts.money.includes(c) && typeof v === 'number' ? 2 : 0))).join('')}</row>`).join('');
+  const cols = opts.widths ? `<cols>${opts.widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>` : '';
+  const pane = opts.header ? `<sheetViews><sheetView workbookViewId="0"${opts.first ? ' tabSelected="1"' : ''}><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`
+    : `<sheetViews><sheetView workbookViewId="0"/></sheetViews>`;
+  const dv = opts.lists ? `<dataValidations count="${opts.lists.length}">${opts.lists.map(([c, items]) =>
+    `<dataValidation type="list" allowBlank="1" showErrorMessage="0" sqref="${colLetter(c)}2:${colLetter(c)}${SHEET_MAX_ROWS}"><formula1>"${items.join(',')}"</formula1></dataValidation>`).join('')}</dataValidations>` : '';
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${pane}<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${data}</sheetData>${dv}</worksheet>`;
+}
+function makeXlsx() {
+  const rows = [SHEET_COLS.map(c => c[1])].concat(sheetRows());
+  const files = {
+    '[Content_Types].xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
+    '_rels/.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+    'xl/workbook.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Products" sheetId="1" r:id="rId1"/><sheet name="How to use" sheetId="2" r:id="rId2"/></sheets></workbook>`,
+    'xl/_rels/workbook.xml.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+    'xl/styles.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE6F3EF"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="2" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+    'xl/worksheets/sheet1.xml': xlsxSheetXml(rows, {
+      header: true, first: true, money: [3],
+      widths: [34, 18, 20, 12, 11, 15, 16, 14, 11, 36],
+      lists: [[4, ['each', 'lb', 'kg']], [7, ['In stock', 'Running low', 'Need to buy']], [8, ['Yes', 'No']]]
+    }),
+    'xl/worksheets/sheet2.xml': xlsxSheetXml(SHEET_HELP.map(l => [l]), { widths: [110] })
+  };
+  return zipStore(files);
+}
+/* ---------- zip: store-only writer, deflate-aware reader ---------- */
+let CRC_TABLE = null;
+function crc32(bytes) {
+  if (!CRC_TABLE) { CRC_TABLE = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC_TABLE[n] = c >>> 0; } }
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function zipStore(files) {
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+  const d = new Date(), dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1),
+    dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const [name, text] of Object.entries(files)) {
+    const nm = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), nm, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, nm.length, true);
+    ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), nm);
+    offset += 30 + nm.length + data.length;
+  }
+  const cdSize = central.reduce((n, a) => n + a.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, Object.keys(files).length, true); end.setUint16(10, Object.keys(files).length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]));
+}
+class SheetError extends Error {}
+async function unzipEntries(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+  if (eocd < 0) throw new SheetError('That file couldn’t be read as an Excel workbook.');
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  if (p === 0xFFFFFFFF) throw new SheetError('That workbook is too large to import. Try saving it as CSV.');
+  const out = new Map();
+  for (let i = 0; i < count; i++) {
+    if (p + 46 > u8.length || dv.getUint32(p, true) !== 0x02014b50) throw new SheetError('That Excel file looks damaged.');
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const loff = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nlen));
+    out.set(name, { method, csize, loff });
+    p += 46 + nlen + xlen + clen;
+  }
+  out.read = async name => {
+    const e = out.get(name); if (!e) return null;
+    const start = e.loff + 30 + dv.getUint16(e.loff + 26, true) + dv.getUint16(e.loff + 28, true);
+    const raw = u8.subarray(start, start + e.csize);
+    let bytes;
+    if (e.method === 0) bytes = raw;
+    else if (e.method === 8) {
+      if (typeof DecompressionStream === 'undefined') throw new SheetError('This browser can’t open Excel files. Save the spreadsheet as CSV and import that instead.');
+      bytes = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    } else throw new SheetError('That Excel file uses a format Pantry Run can’t read. Try saving it as CSV.');
+    return new TextDecoder().decode(bytes);
+  };
+  return out;
+}
+const xmlDoc = text => {
+  const d = new DOMParser().parseFromString(text, 'application/xml');
+  if (d.getElementsByTagName('parsererror').length) throw new SheetError('That Excel file looks damaged.');
+  return d;
+};
+const byTag = (node, tag) => [...node.getElementsByTagNameNS('*', tag)];
+async function readXlsx(buf) {
+  const zip = await unzipEntries(buf);
+  if (!zip.has('xl/workbook.xml')) throw new SheetError('That file isn’t an Excel workbook.');
+  const wb = xmlDoc(await zip.read('xl/workbook.xml'));
+  const first = byTag(wb, 'sheet')[0];
+  let path = 'xl/worksheets/sheet1.xml';
+  if (first) {
+    const rid = first.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id') || first.getAttribute('r:id');
+    const relsText = await zip.read('xl/_rels/workbook.xml.rels');
+    if (rid && relsText) {
+      const rel = byTag(xmlDoc(relsText), 'Relationship').find(r => r.getAttribute('Id') === rid);
+      if (rel) { const t = rel.getAttribute('Target'); path = t.startsWith('/') ? t.slice(1) : 'xl/' + t.replace(/^\.\//, ''); }
+    }
+  }
+  const shared = [];
+  const sst = await zip.read('xl/sharedStrings.xml');
+  if (sst) for (const si of byTag(xmlDoc(sst), 'si')) shared.push(byTag(si, 't').filter(t => !t.closest || !t.parentNode || t.parentNode.localName !== 'rPh').map(t => t.textContent).join(''));
+  const sheetText = await zip.read(path);
+  if (!sheetText) throw new SheetError('That workbook has no sheets to import.');
+  const rows = [];
+  const colIdx = ref => { const m = /^([A-Z]+)/.exec(ref || ''); if (!m) return -1; let n = 0; for (const ch of m[1]) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+  for (const row of byTag(xmlDoc(sheetText), 'row')) {
+    const rn = parseInt(row.getAttribute('r'), 10);
+    const r = isFinite(rn) ? rn - 1 : rows.length;
+    const vals = [];
+    let next = 0;
+    for (const c of [...row.children].filter(x => x.localName === 'c')) {
+      let ci = colIdx(c.getAttribute('r')); if (ci < 0) ci = next;
+      next = ci + 1;
+      const t = c.getAttribute('t'), vEl = byTag(c, 'v')[0], v = vEl ? vEl.textContent : '';
+      let val;
+      if (t === 's') val = shared[parseInt(v, 10)] || '';
+      else if (t === 'inlineStr') val = byTag(c, 't').map(x => x.textContent).join('');
+      else if (t === 'b') val = v === '1' ? 'TRUE' : 'FALSE';
+      else val = v;
+      vals[ci] = val;
+    }
+    rows[r] = Array.from(vals, x => x == null ? '' : String(x));
+    if (rows.length > SHEET_MAX_ROWS + 50) break;
+  }
+  return Array.from(rows, x => x || []);
+}
+function readCsv(text) {
+  text = text.replace(/^﻿/, '');
+  /* the delimiter is whichever of , ; tab appears most in the first line */
+  const firstLine = text.split(/\r?\n/, 1)[0] || '';
+  const count = ch => firstLine.split(ch).length - 1;
+  const delim = [',', ';', '\t'].sort((a, b) => count(b) - count(a))[0];
+  const rows = [];
+  let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+      else field += ch;
+    } else if (ch === '"' && field === '') q = true;
+    else if (ch === delim) { row.push(field); field = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); rows.push(row); row = []; field = '';
+      if (rows.length > SHEET_MAX_ROWS + 50) break;
+    } else field += ch;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+async function readSpreadsheet(file) {
+  const name = (file.name || '').toLowerCase();
+  if (/\.(xls|numbers|ods|xlsb)$/.test(name)) throw new SheetError('Pantry Run reads .xlsx and .csv files. Save the spreadsheet as Excel (.xlsx) or CSV and import that.');
+  if (file.size > 10 * 1024 * 1024) throw new SheetError('That file is too large for a Pantry Run catalog.');
+  const buf = await file.arrayBuffer();
+  const head = new Uint8Array(buf.slice(0, 4));
+  if (head[0] === 0x50 && head[1] === 0x4B) return readXlsx(buf);          /* "PK" = zip = .xlsx */
+  if (head[0] === 0xD0 && head[1] === 0xCF) throw new SheetError('That’s an older Excel file (.xls). Save it as .xlsx or CSV and import that.');
+  const text = new TextDecoder().decode(buf);
+  if (/\u0000/.test(text.slice(0, 2000))) throw new SheetError('That file isn’t a spreadsheet Pantry Run can read.');
+  return readCsv(text);
+}
+
+/* ---------- understanding the rows ---------- */
+function parseMoneyCell(v) {
+  const raw = String(v).trim();
+  if (!raw) return null;
+  let s = raw.replace(/[^\d.,\-]/g, '');
+  if (!/\d/.test(s)) return NaN;                              /* "cheap", "ask" */
+  if (/^-?\d+,\d{1,2}$/.test(s)) s = s.replace(',', '.');   /* 1,49 */
+  else s = s.replace(/,/g, '');                                /* 1,299.00 */
+  const n = parseFloat(s);
+  return isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : NaN;
+}
+function parseNumCell(v) {
+  const raw = String(v).trim();
+  if (!raw) return null;
+  let s = raw.replace(/[^\d.,\-]/g, '');
+  if (!/\d/.test(s)) return NaN;                              /* "lots" */
+  if (/^\d+,\d+$/.test(s)) s = s.replace(',', '.'); else s = s.replace(/,/g, '');
+  const n = parseFloat(s);
+  return isFinite(n) && n > 0 ? n : NaN;
+}
+function parsePricedBy(v) {
+  const s = sheetNorm(v);
+  if (!s) return null;
+  if (/^(each|ea|unit|units|item|items|piece|pieces|pc|pcs|count|ct|per item|per unit|by unit)$/.test(s)) return { unitType: 'unit' };
+  if (/^(lb|lbs|pound|pounds|per lb|by lb|per pound)$/.test(s)) return { unitType: 'weight', weightUnit: 'lb' };
+  if (/^(kg|kgs|kilo|kilos|kilogram|kilograms|per kg|by kg)$/.test(s)) return { unitType: 'weight', weightUnit: 'kg' };
+  if (/^(weight|by weight|weighed)$/.test(s)) return { unitType: 'weight' };
+  return NaN;
+}
+function parseStockCell(v) {
+  const s = sheetNorm(v);
+  if (!s) return null;
+  if (/^(in|in stock|ok|have|have it|stocked|full|yes)$/.test(s)) return 'in';
+  if (/^(low|running low|runing low|almost out|low stock)$/.test(s)) return 'low';
+  if (/^(need|need to buy|needed|out|out of stock|buy|empty)$/.test(s)) return 'need';
+  return NaN;
+}
+function parseFavCell(v) {
+  const raw = String(v).trim();
+  if (/^[★☆✓✔x]$/i.test(raw)) return true;
+  const s = sheetNorm(v);
+  if (!s) return null;
+  if (/^(yes|y|true|1|fav|favourite|favorite|star|starred)$/.test(s)) return true;
+  if (/^(no|n|false|0|not)$/.test(s)) return false;
+  return NaN;
+}
+function findHeader(rows) {
+  const want = new Map();
+  SHEET_COLS.forEach(([key, , syn]) => syn.forEach(s => { if (!want.has(s)) want.set(s, key); }));
+  for (let r = 0; r < Math.min(rows.length, 10); r++) {
+    const cells = rows[r] || [];
+    const map = {}, extra = [];
+    cells.forEach((h, i) => {
+      const k = want.get(sheetNorm(h));
+      if (k && map[k] == null) map[k] = i;
+      else if (String(h || '').trim()) extra.push(String(h).trim());
+    });
+    if (map.name != null) return { row: r, map, extra };
+  }
+  return null;
+}
+/* Work out exactly what an import would change, without changing anything. */
+function planImport(rows) {
+  const plan = { adds: [], updates: [], unchanged: 0, skipped: [], warnings: [], newCats: [], newStores: [], extra: [], rows: 0 };
+  if (!rows.some(r => r && r.some(c => String(c).trim()))) { plan.error = 'That spreadsheet is empty.'; return plan; }
+  const hd = findHeader(rows);
+  if (!hd) { plan.error = 'Couldn’t find a “Product name” column. The first row should hold column names like Product name, Category, Preferred store and Usual price.'; return plan; }
+  plan.extra = hd.extra;
+  const byName = new Map(S.products.map(p => [nameKey(p.name), p]));
+  const catByName = new Map(S.categories.map(c => [nameKey(c.name), c]));
+  const storeByName = new Map(S.stores.map(s => [nameKey(s.name), s]));
+  const newCat = new Map(), newStore = new Map(), seen = new Map();
+  const body = rows.slice(hd.row + 1);
+  if (body.length > SHEET_MAX_ROWS) { plan.error = `That spreadsheet has more than ${SHEET_MAX_ROWS.toLocaleString()} rows. Split it into smaller files.`; return plan; }
+  const get = (r, k) => hd.map[k] == null ? '' : String(r[hd.map[k]] == null ? '' : r[hd.map[k]]).trim();
+  body.forEach((r, i) => {
+    const rowNo = hd.row + i + 2;
+    if (!r || !r.some(c => String(c).trim())) return;
+    plan.rows++;
+    const name = get(r, 'name').replace(/\s+/g, ' ');
+    if (!name) { plan.skipped.push({ row: rowNo, why: 'no product name' }); return; }
+    if (name.length > 200) { plan.skipped.push({ row: rowNo, name: name.slice(0, 40) + '…', why: 'name is too long' }); return; }
+    const key = nameKey(name);
+    if (seen.has(key)) { plan.skipped.push({ row: rowNo, name, why: `listed again (first on row ${seen.get(key)})` }); return; }
+    seen.set(key, rowNo);
+    const warn = (what, val) => plan.warnings.push({ row: rowNo, name, what, val: String(val).slice(0, 40) });
+    const f = {};
+    const cat = get(r, 'category');
+    if (cat) {
+      const c = catByName.get(nameKey(cat));
+      if (c) f.categoryId = c.id;
+      else { const k = nameKey(cat); if (!newCat.has(k)) newCat.set(k, { name: cat.replace(/\s+/g, ' ') }); f.newCat = k; }
+    }
+    const st = get(r, 'store');
+    if (st) {
+      const s = storeByName.get(nameKey(st));
+      if (s) f.storeId = s.id;
+      else { const k = nameKey(st); if (!newStore.has(k)) newStore.set(k, { name: st.replace(/\s+/g, ' ') }); f.newStore = k; }
+    }
+    const pr = get(r, 'price');
+    if (pr) { const v = parseMoneyCell(pr); if (Number.isNaN(v)) warn('Usual price', pr); else if (v != null) f.price = v; }
+    const pb = get(r, 'pricedBy');
+    if (pb) { const v = parsePricedBy(pb); if (Number.isNaN(v)) warn('Priced by', pb); else if (v) f.pricedBy = v; }
+    const am = get(r, 'amount');
+    if (am) { const v = parseNumCell(am); if (Number.isNaN(v)) warn('Default amount', am); else if (v != null) f.amount = v; }
+    const pk = get(r, 'pkg'); if (pk) f.pkg = pk.slice(0, 120);
+    const sk = get(r, 'stock');
+    if (sk) { const v = parseStockCell(sk); if (Number.isNaN(v)) warn('Stock', sk); else if (v) f.stock = v; }
+    const fv = get(r, 'fav');
+    if (fv) { const v = parseFavCell(fv); if (Number.isNaN(v)) warn('Favourite', fv); else if (v != null) f.fav = v; }
+    const nt = get(r, 'notes'); if (nt) f.notes = nt.slice(0, 2000);
+
+    const existing = byName.get(key);
+    if (!existing) { plan.adds.push({ row: rowNo, name, f }); return; }
+    const changes = describeChanges(existing, f, newCat, newStore);
+    if (changes.length) plan.updates.push({ row: rowNo, p: existing, f, changes });
+    else plan.unchanged++;
+  });
+  plan.newCats = [...newCat.entries()].map(([k, v]) => ({ key: k, ...v }))
+    .filter(c => plan.adds.some(a => a.f.newCat === c.key) || plan.updates.some(u => u.f.newCat === c.key));
+  plan.newStores = [...newStore.entries()].map(([k, v]) => ({ key: k, ...v }))
+    .filter(s => plan.adds.some(a => a.f.newStore === s.key) || plan.updates.some(u => u.f.newStore === s.key));
+  return plan;
+}
+/* the product as it would be after this row is applied */
+function applyFields(p, f, catIds, storeIds) {
+  if (f.categoryId !== undefined) p.categoryId = f.categoryId;
+  if (f.newCat) p.categoryId = catIds.get(f.newCat);
+  if (f.storeId !== undefined) p.preferredStoreId = f.storeId;
+  if (f.newStore) p.preferredStoreId = storeIds.get(f.newStore);
+  if (f.price != null) p.usualPrice = f.price;
+  if (f.pricedBy) {
+    p.unitType = f.pricedBy.unitType;
+    if (f.pricedBy.weightUnit) p.weightUnit = f.pricedBy.weightUnit;
+    else if (p.unitType === 'weight' && !p.weightUnit) p.weightUnit = defaultWeightUnit();
+  }
+  if (f.amount != null) {
+    if (p.unitType === 'weight') p.defaultWeight = Math.round(f.amount * 1000) / 1000;
+    else p.defaultQty = Math.max(1, Math.round(f.amount));
+  }
+  if (f.pkg != null) p.packageSize = f.pkg;
+  if (f.stock) p.stock = f.stock;
+  if (f.fav === true) p.favourite = true;
+  if (f.fav === false) delete p.favourite;
+  if (f.notes != null) p.notes = f.notes;
+  return p;
+}
+function describeChanges(p, f, newCat, newStore) {
+  const probe = { cat: new Map([...newCat.keys()].map(k => [k, '__new:' + k])), store: new Map([...newStore.keys()].map(k => [k, '__new:' + k])) };
+  const after = applyFields(clone(p), f, probe.cat, probe.store);
+  const out = [];
+  const nm = (id, kind) => String(id || '').startsWith('__new:')
+    ? (kind === 'cat' ? newCat : newStore).get(id.slice(6)).name
+    : id ? (kind === 'cat' ? catName(id) : storeName(id)) : (kind === 'cat' ? 'Uncategorized' : 'none');
+  const unit = x => x.unitType === 'weight' ? (x.weightUnit || 'lb') : 'each';
+  const amt = x => x.unitType === 'weight' ? numfmt(x.defaultWeight || 1) + ' ' + (x.weightUnit || 'lb') : numfmt(x.defaultQty || 1);
+  if ((after.categoryId || null) !== (p.categoryId || null)) out.push(['Category', nm(p.categoryId, 'cat'), nm(after.categoryId, 'cat')]);
+  if ((after.preferredStoreId || null) !== (p.preferredStoreId || null)) out.push(['Store', nm(p.preferredStoreId, 'store'), nm(after.preferredStoreId, 'store')]);
+  if (after.usualPrice !== p.usualPrice) out.push(['Price', p.usualPrice == null ? 'none' : money(p.usualPrice), money(after.usualPrice)]);
+  if (unit(after) !== unit(p)) out.push(['Priced by', unit(p), unit(after)]);
+  else if (amt(after) !== amt(p)) out.push(['Default amount', amt(p), amt(after)]);
+  if ((after.packageSize || '') !== (p.packageSize || '')) out.push(['Package size', p.packageSize || 'none', after.packageSize]);
+  if ((after.stock || 'in') !== (p.stock || 'in')) out.push(['Stock', STOCK_WORD[p.stock || 'in'], STOCK_WORD[after.stock]]);
+  if (!!after.favourite !== !!p.favourite) out.push(['Favourite', p.favourite ? 'yes' : 'no', after.favourite ? 'yes' : 'no']);
+  if ((after.notes || '') !== (p.notes || '')) out.push(['Notes', p.notes ? 'changed' : 'none', 'updated']);
+  return out;
+}
+
+/* ---------- saving ---------- */
+let importing = false;
+async function runImport() {
+  const plan = ui.importPlan;
+  if (!plan || importing || restoring) return;
+  importing = true; restoring = true;
+  showSheet(() => buildBusy('Importing…'), { kind: 'busy' }, 'root');
+  try { await saveSafety(currentData(), null, 'import'); }
+  catch (e) {
+    console.error(e);
+    importing = false; restoring = false;
+    ui.importResult = { ok: false, message: 'Couldn’t keep a safety copy of your current data, so nothing was imported.' };
+    showSheet(buildImportDone, { kind: 'import-done' }, 'root'); render();
+    return;
+  }
+  try {
+    const catIds = new Map(), storeIds = new Map();
+    for (const c of plan.newCats) { const r = addCategoryQuiet(c.name); catIds.set(c.key, r.id); }
+    for (const s of plan.newStores) { const r = addStoreQuiet(s.name); storeIds.set(s.key, r.id); }
+    const touched = [];
+    for (const a of plan.adds) {
+      const p = blankProduct();
+      p.name = a.name; p.categoryId = null;
+      applyFields(p, a.f, catIds, storeIds);
+      S.products.push(p); touched.push(p);
+    }
+    for (const u of plan.updates) {
+      const p = productById(u.p.id); if (!p) continue;
+      applyFields(p, u.f, catIds, storeIds);
+      delete p.taxable;
+      touched.push(p);
+    }
+    S.products.sort((a, b) => a.name.localeCompare(b.name));
+    if (backend === 'db') {
+      const tasks = touched.map(p => () => writeQueued('products/' + p.id, () => DB.doc('products/' + p.id).set(p)));
+      if (plan.newCats.length) tasks.push(() => writeQueued('meta/categories', () => DB.doc('meta/categories').set({ items: S.categories })));
+      if (plan.newStores.length) tasks.push(() => writeQueued('meta/stores', () => DB.doc('meta/stores').set({ items: S.stores })));
+      await runLimited(tasks, 6);
+    } else {
+      localStorage.setItem(LS_KEY, JSON.stringify(snapshotLocal()));
+    }
+    ui.importResult = { ok: true, added: plan.adds.length, updated: plan.updates.length, cats: plan.newCats.length, stores: plan.newStores.length };
+  } catch (e) {
+    console.error(e);
+    ui.importResult = { ok: false, message: 'Part of the import didn’t save. Tap Undo import to put everything back as it was, then try again.' };
+    if (backend === 'db') await reloadFromDb().catch(() => {});
+  }
+  importing = false; restoring = false; ui.importPlan = null;
+  showSheet(buildImportDone, { kind: 'import-done' }, 'root');
+  render();
+}
+/* like addCategory/addStore, but without a save per call — the import saves once */
+function addCategoryQuiet(name) {
+  const ex = S.categories.find(c => nameKey(c.name) === nameKey(name));
+  if (ex) { delete ex.archived; return ex; }
+  const c = { id: uid('cat'), name, order: S.categories.length };
+  S.categories.push(c); return c;
+}
+function addStoreQuiet(name) {
+  const ex = S.stores.find(s => nameKey(s.name) === nameKey(name));
+  if (ex) { delete ex.archived; return ex; }
+  const s = { id: uid('st'), name };
+  S.stores.push(s); return s;
+}
+
+/* ---------- sheets ---------- */
+async function saveFile(name, data, btn) {
+  let dl = null;
+  try { dl = await window.claude?.use?.('downloads'); } catch (e) { dl = null; }
+  if (dl) {
+    if (btn) btn.disabled = true;
+    try { await dl.save({ filename: name, data }); toast('Saved ' + name, 'ok'); return true; }
+    catch (err) {
+      const code = err && err.code;
+      if (code === 'declined') toast('Not saved');
+      else if (code === 'rate_limited') toast('A save prompt is already open');
+      else toast('Downloads aren’t available here');
+      return false;
+    } finally { if (btn && btn.isConnected) btn.disabled = false; }
+  }
+  try {
+    const blob = data instanceof Blob ? data : new Blob([data]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Saved ' + name, 'ok'); return true;
+  } catch (e) { toast('Couldn’t save the file here'); return false; }
+}
+const sheetFilename = ext => backupFilename().replace('pantry-run-backup-', 'pantry-run-catalog-').replace(/\.json$/, '.' + ext);
+function buildSheetExport() {
+  const n = S.products.length;
+  return sheetHead('Download spreadsheet', n ? `${n} ${n === 1 ? 'product' : 'products'}, ready to edit` : 'An empty template to fill in') + `
+    <div class="sheet-bd">
+      <div class="sec-note" style="margin:0 0 12px">${n
+        ? 'Your whole catalog as a spreadsheet — name, category, store, price, how it’s priced, default amount, package size, stock, favourite and notes. Edit it in Excel, Numbers or Google Sheets, then import it back.'
+        : 'A spreadsheet with the right columns. Add one product per row in Excel, Numbers or Google Sheets, then import it.'}</div>
+      <div class="card stack">
+        <button class="row tappable" data-act="sheet-save" data-v="xlsx" style="width:100%">
+          <span class="lab-ico sheet-ico">${svg('download')}</span>
+          <div class="body"><div class="name">Excel workbook (.xlsx)</div><div class="meta">Best for Excel, Numbers and Google Sheets — includes dropdowns and a “How to use” tab</div></div>
+        </button>
+        <button class="row tappable" data-act="sheet-save" data-v="csv" style="width:100%">
+          <span class="lab-ico sheet-ico">${svg('download')}</span>
+          <div class="body"><div class="name">CSV file (.csv)</div><div class="meta">Plain table that opens anywhere</div></div>
+        </button>
+      </div>
+      <div class="hint" style="margin-top:12px">A blank cell means “leave as it is” when you import, so you only need to fill in what you want to change.</div>
+    </div>`;
+}
+function buildSheetImport() {
+  const err = ui.importErr;
+  return sheetHead('Import from a spreadsheet', 'Excel (.xlsx) or CSV') + `
+    <div class="sheet-bd">
+      <input type="file" id="sheet-file" accept=".xlsx,.csv,.tsv,.txt,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <button class="btn primary block" data-act="sheet-choose">${svg('upload')}Choose spreadsheet</button>
+      ${err ? `<div class="restore-err" role="alert">${esc(err)}</div>` : ''}
+      <ul class="impact keep" style="margin-top:14px">
+        <li>A row whose <b>Product name</b> matches one of your products <b>updates it</b>; any other row <b>adds a new product</b>.</li>
+        <li>Blank cells leave that detail as it is. Deleting a row never deletes a product.</li>
+        <li>New store and category names are created for you.</li>
+        <li>Your shopping list, trip history and price history aren’t touched, and you’ll see everything before it’s saved.</li>
+      </ul>
+      <div class="hint" style="margin-top:12px">No file yet? <button class="linkbtn inline" data-act="sheet-export">Download one to start from</button></div>
+    </div>`;
+}
+function buildImportPreview() {
+  const plan = ui.importPlan;
+  if (!plan) return sheetHead('Nothing to import') + `<div class="sheet-bd"><div class="empty">Choose a spreadsheet first.</div></div>`;
+  const total = plan.adds.length + plan.updates.length;
+  const stat = (n, label, cls) => `<div class="istat${cls ? ' ' + cls : ''}"><div class="v num">${n}</div><div class="k">${label}</div></div>`;
+  const list = (title, items, open) => items.length ? `<details class="disclose"${open ? ' open' : ''}>
+      <summary>${svg('car', 'car')}${esc(title)}<span class="n">${items.length}</span></summary>
+      <div class="inner ilist">${items.join('')}</div></details>` : '';
+  const more = (arr, n, fn) => arr.slice(0, n).map(fn).concat(arr.length > n ? [`<div class="irow muted">…and ${arr.length - n} more</div>`] : []);
+  return sheetHead('Check your import', ui.importFile ? ui.importFile : 'Spreadsheet') + `
+    <div class="sheet-bd">
+      <div class="istats">
+        ${stat(plan.adds.length, plan.adds.length === 1 ? 'new product' : 'new products', plan.adds.length ? 'on' : '')}
+        ${stat(plan.updates.length, 'updated', plan.updates.length ? 'on' : '')}
+        ${stat(plan.unchanged, 'unchanged')}
+        ${stat(plan.skipped.length, 'skipped', plan.skipped.length ? 'warn' : '')}
+      </div>
+      ${plan.newCats.length || plan.newStores.length ? `<div class="sec-note" style="margin:12px 2px 0">${[
+        plan.newCats.length ? `New ${plan.newCats.length === 1 ? 'category' : 'categories'}: <b>${plan.newCats.map(c => esc(c.name)).join(', ')}</b>` : '',
+        plan.newStores.length ? `New ${plan.newStores.length === 1 ? 'store' : 'stores'}: <b>${plan.newStores.map(s => esc(s.name)).join(', ')}</b>` : ''
+      ].filter(Boolean).join('<br>')}</div>` : ''}
+      ${!total ? `<div class="empty" style="margin-top:14px"><strong>Nothing to change</strong>Every product in this file already matches your catalog.</div>` : ''}
+      ${list('New products', more(plan.adds, 60, a => `<div class="irow"><b>${esc(a.name)}</b>${a.f.price != null ? `<span class="num">${money(a.f.price)}</span>` : ''}</div>`), plan.adds.length && plan.adds.length <= 8)}
+      ${list('Updated products', more(plan.updates, 60, u => `<div class="irow"><b>${esc(u.p.name)}</b><span>${u.changes.map(([k, a, b]) => `${esc(k)}: ${esc(a)} → ${esc(b)}`).join(' · ')}</span></div>`), plan.updates.length && plan.updates.length <= 8)}
+      ${list('Skipped rows', more(plan.skipped, 60, s => `<div class="irow"><b>Row ${s.row}</b><span>${s.name ? esc(s.name) + ' — ' : ''}${esc(s.why)}</span></div>`), plan.skipped.length && plan.skipped.length <= 5)}
+      ${list('Cells that were ignored', more(plan.warnings, 60, w => `<div class="irow"><b>Row ${w.row}</b><span>${esc(w.name)} — ${esc(w.what)} “${esc(w.val)}” isn’t something Pantry Run understands, so it was left as it is</span></div>`), false)}
+      ${plan.extra.length ? `<div class="hint" style="margin-top:12px">Columns Pantry Run doesn’t use were ignored: ${plan.extra.slice(0, 8).map(esc).join(', ')}${plan.extra.length > 8 ? '…' : ''}.</div>` : ''}
+      ${total ? `<ul class="impact keep" style="margin-top:14px"><li>A <b>safety copy</b> is kept first, so you can <b>Undo import</b> from Settings.</li></ul>` : ''}
+    </div>
+    <div class="sheet-ft">
+      <button class="btn" data-act="close">Cancel</button>
+      <button class="btn primary" data-act="import-confirm"${total ? '' : ' disabled'}>${total ? `Import ${total} ${total === 1 ? 'change' : 'changes'}` : 'Nothing to import'}</button>
+    </div>`;
+}
+function buildImportDone() {
+  const r = ui.importResult || {};
+  const parts = r.ok ? [
+    r.added ? `${r.added} new ${r.added === 1 ? 'product' : 'products'}` : '',
+    r.updated ? `${r.updated} updated` : '',
+    r.cats ? `${r.cats} new ${r.cats === 1 ? 'category' : 'categories'}` : '',
+    r.stores ? `${r.stores} new ${r.stores === 1 ? 'store' : 'stores'}` : ''
+  ].filter(Boolean) : [];
+  return sheetHead(r.ok ? 'Import finished' : 'Import didn’t finish') + `
+    <div class="sheet-bd">
+      ${r.ok ? `<div class="sec-note" style="margin:0">${esc(parts.join(', ') || 'No changes')}. Your shopping list and history weren’t touched.</div>
+               <div class="card" style="padding:4px 14px;margin-top:12px">
+                 <div class="kv"><span class="k">Products in your catalog</span><span class="v">${S.products.length}</span></div>
+                 <div class="kv"><span class="k">Stores</span><span class="v">${activeStores().length}</span></div>
+                 <div class="kv"><span class="k">Categories</span><span class="v">${activeCategories().length}</span></div>
+               </div>`
+        : `<div class="restore-err" role="alert" style="margin-top:0">${esc(r.message || 'Something went wrong.')}</div>`}
+    </div>
+    <div class="sheet-ft">
+      ${safetyHead ? `<button class="btn" data-act="restore-undo">Undo import</button>` : ''}
+      <button class="btn primary" data-act="import-finish">Done</button>
+    </div>`;
+}
+async function acceptSheetFile(file) {
+  ui.importErr = null;
+  let rows;
+  try { rows = await readSpreadsheet(file); }
+  catch (e) {
+    if (!(e instanceof SheetError)) console.error(e);   /* expected problems are shown, not logged */
+    ui.importErr = e instanceof SheetError ? e.message : 'That file couldn’t be read as a spreadsheet. Try saving it as .xlsx or CSV.';
+    renderSheets(); return;
+  }
+  const plan = planImport(rows);
+  if (plan.error) { ui.importErr = plan.error; renderSheets(); return; }
+  ui.importPlan = plan; ui.importFile = file.name || '';
+  showSheet(buildImportPreview, { kind: 'import-preview' }, 'push');
+}
+function sheetSection() {
+  return `<div class="sheetrow">
+    <div class="sec-note" style="margin:16px 0 10px"><b>Spreadsheet</b> — add or edit lots of products at once in Excel, Numbers or Google Sheets.</div>
+    <div style="display:flex;gap:9px">
+      <button class="btn" data-act="sheet-export" style="flex:1">${svg('download')}Download</button>
+      <button class="btn" data-act="sheet-import" style="flex:1">${svg('upload')}Import…</button>
+    </div>
   </div>`;
 }
 
@@ -4331,6 +4962,16 @@ function handleClick(e) {
     case 'restore-confirm': runRestore(); return;
     case 'restore-undo': startUndo(); return;
     case 'restore-finish': closeSheet(); render(); return;
+    case 'sheet-export': commitTaxField(); showSheet(buildSheetExport, { kind: 'sheet-export' }, sheetIsOpen() ? 'push' : 'root'); return;
+    case 'sheet-save': saveFile(sheetFilename(el.dataset.v), el.dataset.v === 'xlsx' ? makeXlsx() : makeCsv(), el); return;
+    case 'sheet-import': commitTaxField(); ui.importErr = null; showSheet(buildSheetImport, { kind: 'sheet-import' }, sheetIsOpen() ? 'push' : 'root'); return;
+    case 'sheet-choose': {
+      const f = document.querySelector('.scrim:last-child #sheet-file');
+      if (f) { f.value = ''; f.click(); }
+      return;
+    }
+    case 'import-confirm': runImport(); return;
+    case 'import-finish': closeSheet(); render(); return;
     case 'set-wunit-default': {
       const u = el.dataset.v;
       if (!WEIGHT_UNITS.includes(u)) return;
@@ -4364,6 +5005,7 @@ document.addEventListener('change', e => {
 
 /* backup file chosen */
 document.addEventListener('change', async e => {
+  if (e.target.id === 'sheet-file') { const f = e.target.files && e.target.files[0]; if (f) acceptSheetFile(f); return; }
   if (e.target.id !== 'restore-file') return;
   const file = e.target.files && e.target.files[0];
   if (!file) return;
